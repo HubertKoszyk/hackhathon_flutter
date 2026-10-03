@@ -17,12 +17,12 @@ class ParkingDetailsSheet extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.98),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.98),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF0284C7).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -37,7 +37,7 @@ class ParkingDetailsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withOpacity(0.2),
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF38BDF8)),
                 ),
@@ -83,7 +83,7 @@ class ParkingDetailsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.2),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(

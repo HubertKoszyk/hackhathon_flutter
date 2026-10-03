@@ -17,6 +17,7 @@ class RouteModel {
   final int durationMinutes;
   final int accessibilityScore; // 0 - 100
   final int stairsAvoided;
+  final int stairsCount;
   final String surfaceSummaryPl;
   final String surfaceSummaryEn;
   final List<AccessibilityAudit> audits;
@@ -38,6 +39,7 @@ class RouteModel {
     required this.durationMinutes,
     required this.accessibilityScore,
     required this.stairsAvoided,
+    this.stairsCount = 0,
     required this.surfaceSummaryPl,
     required this.surfaceSummaryEn,
     required this.audits,

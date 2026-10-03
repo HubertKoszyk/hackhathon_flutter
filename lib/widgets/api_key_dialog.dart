@@ -152,8 +152,8 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: _isSuccess
-                      ? const Color(0xFF10B981).withOpacity(0.15)
-                      : const Color(0xFFEF4444).withOpacity(0.15),
+                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                      : const Color(0xFFEF4444).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: _isSuccess
@@ -177,7 +177,7 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

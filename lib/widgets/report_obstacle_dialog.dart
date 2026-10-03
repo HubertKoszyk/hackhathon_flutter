@@ -80,7 +80,7 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withOpacity(0.2),
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(Icons.camera_alt, color: Color(0xFFF59E0B), size: 22),

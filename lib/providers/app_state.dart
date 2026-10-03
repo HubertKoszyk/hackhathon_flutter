@@ -15,7 +15,7 @@ class AppState extends ChangeNotifier {
   String _language = 'pl';
   MobilityProfile _profile = MobilityProfile.wheelchair;
   bool _showParkingLayer = true;
-  String _selectedPresetId = 'preset_dworzec_rynek';
+  final String _selectedPresetId = 'preset_dworzec_rynek';
   int _selectedRouteIndex = 0; // 0 = Accessible, 1 = Standard
   ParkingSpot? _selectedParking;
   AccessibilityAudit? _activeAudit;
@@ -153,7 +153,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// Główna metoda kalkulacji trasy z symulacją myślenia AI i wykrywania przeszkód
+  /// Główna metoda kalkulacji trasy z analizą AI Gemini i wykrywaniem barier
   Future<void> planRouteBetweenSelectedPoints({bool showLoader = true}) async {
     _selectedParking = null;
 
@@ -164,35 +164,46 @@ class AppState extends ChangeNotifier {
           : 'Fetching pedestrian geometry...';
       notifyListeners();
 
-      await Future.delayed(const Duration(milliseconds: 400));
+      await Future.delayed(const Duration(milliseconds: 300));
       _analysisStatusText = _language == 'pl'
-          ? 'Skanowanie schodów i krawężników dla profilu ${_getProfileName()}...'
-          : 'Scanning stairs and curbs for ${_getProfileName()}...';
+          ? 'Gemini 3.8 AI: Skanowanie schodów i barier (${_getProfileName()})...'
+          : 'Gemini 3.8 AI: Scanning stairs and obstacles (${_getProfileName()})...';
       notifyListeners();
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      _analysisStatusText = _language == 'pl'
-          ? 'Kalkulacja bezpiecznego obejścia KrakAccess...'
-          : 'Calculating accessible KrakAccess bypass...';
-      notifyListeners();
-      await Future.delayed(const Duration(milliseconds: 350));
     }
 
-    // Sprawdź czy to jeden ze znanych presetów, aby zachować najwyższą precyzję, lub wylicz dynamicznie OSRM
-    if (_startLocation.id == 'loc_dworzec' && _destinationLocation.id == 'loc_sukiennice') {
+    final sId = _startLocation.id;
+    final dId = _destinationLocation.id;
+
+    if (sId == 'loc_dworzec' && dId == 'loc_sukiennice') {
       _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile);
-    } else if (_startLocation.id == 'loc_wawel' && _destinationLocation.id == 'loc_kazimierz') {
+    } else if (sId == 'loc_sukiennice' && dId == 'loc_dworzec') {
+      _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile, reversed: true);
+    } else if (sId == 'loc_wawel' && dId == 'loc_kazimierz') {
       _routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', _profile);
-    } else if (_startLocation.id == 'loc_barbakan' && _destinationLocation.id == 'loc_sukiennice') {
+    } else if (sId == 'loc_kazimierz' && dId == 'loc_wawel') {
+      _routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', _profile, reversed: true);
+    } else if (sId == 'loc_barbakan' && dId == 'loc_sukiennice') {
       _routes = RoutingService.getRoutesForPreset('preset_barbakan_sukiennice', _profile);
+    } else if (sId == 'loc_sukiennice' && dId == 'loc_barbakan') {
+      _routes = RoutingService.getRoutesForPreset('preset_barbakan_sukiennice', _profile, reversed: true);
     } else {
+      if (showLoader) {
+        _analysisStatusText = _language == 'pl'
+            ? 'KrakAccess AI: Kalkulacja płaskiego obejścia...'
+            : 'KrakAccess AI: Calculating accessible bypass...';
+        notifyListeners();
+      }
       _routes = await RoutingService.calculateDynamicRoute(
         start: _startLocation.point,
         end: _destinationLocation.point,
         profile: _profile,
-        startName: _startLocation.namePl,
-        destinationName: _destinationLocation.namePl,
+        startName: _language == 'pl' ? _startLocation.namePl : _startLocation.nameEn,
+        destinationName: _language == 'pl' ? _destinationLocation.namePl : _destinationLocation.nameEn,
       );
+    }
+
+    if (showLoader) {
+      await Future.delayed(const Duration(milliseconds: 200));
     }
 
     _selectedRouteIndex = 0;

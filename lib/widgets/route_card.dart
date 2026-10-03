@@ -293,15 +293,45 @@ class RouteCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            '${route.accessibilityScore}% ${state.tr('route_score')}',
-                            style: TextStyle(
-                              color: isAccessible
-                                  ? const Color(0xFF34D399)
-                                  : const Color(0xFFF87171),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${route.accessibilityScore}% ${state.tr('route_score')}',
+                                style: TextStyle(
+                                  color: isAccessible
+                                      ? const Color(0xFF34D399)
+                                      : const Color(0xFFF87171),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: isAccessible
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                                      : const Color(0xFFEF4444).withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  isAccessible
+                                      ? (route.stairsAvoided > 0
+                                          ? '-${route.stairsAvoided} st.'
+                                          : '0 st.')
+                                      : (route.stairsCount > 0
+                                          ? '${route.stairsCount} st.'
+                                          : '0 st.'),
+                                  style: TextStyle(
+                                    color: isAccessible
+                                        ? const Color(0xFF34D399)
+                                        : (route.stairsCount > 0 ? const Color(0xFFFCA5A5) : Colors.white70),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -322,12 +352,23 @@ class RouteCard extends StatelessWidget {
                   color: const Color(0xFF1E293B),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                    color: (activeRoute.type == RouteType.accessible
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFEF4444))
+                        .withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.streetview, color: Color(0xFFF87171), size: 16),
+                    Icon(
+                      activeRoute.type == RouteType.accessible
+                          ? Icons.shield_outlined
+                          : Icons.warning_amber_rounded,
+                      color: activeRoute.type == RouteType.accessible
+                          ? const Color(0xFF34D399)
+                          : const Color(0xFFF87171),
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -335,14 +376,20 @@ class RouteCard extends StatelessWidget {
                         children: [
                           Text(
                             isPL ? activeRoute.detectedBarrierPl! : (activeRoute.detectedBarrierEn ?? activeRoute.detectedBarrierPl!),
-                            style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: activeRoute.type == RouteType.accessible
+                                  ? const Color(0xFF6EE7B7)
+                                  : const Color(0xFFFCA5A5),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (activeRoute.bypassReasonPl != null)
                             Text(
                               isPL ? activeRoute.bypassReasonPl! : (activeRoute.bypassReasonEn ?? activeRoute.bypassReasonPl!),
-                              style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 9.5),
+                              style: const TextStyle(color: Colors.white70, fontSize: 9.5),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -355,12 +402,12 @@ class RouteCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+                            color: const Color(0xFF0284C7).withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFF87171)),
+                            border: Border.all(color: const Color(0xFF38BDF8)),
                           ),
                           child: Text(
-                            isPL ? 'Zdjęcie 📸' : 'Photo 📸',
+                            isPL ? 'Audyt AI 📸' : 'AI Audit 📸',
                             style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -420,25 +467,63 @@ class RouteCard extends StatelessWidget {
                   label: activeRoute.getDistanceString(),
                 ),
                 _buildMetric(
-                  icon: Icons.stairs_outlined,
+                  icon: activeRoute.type == RouteType.accessible
+                      ? Icons.task_alt
+                      : Icons.stairs_outlined,
                   value: activeRoute.type == RouteType.accessible
                       ? '0'
-                      : '${activeRoute.stairsAvoided}',
+                      : '${activeRoute.stairsCount}',
                   label: activeRoute.type == RouteType.accessible
-                      ? '${activeRoute.stairsAvoided} ${state.tr('steps_avoided')}'
-                      : 'schodów',
+                      ? (activeRoute.stairsAvoided > 0
+                          ? '${isPL ? "ominięto" : "avoided"} ${activeRoute.stairsAvoided} st.'
+                          : (isPL ? 'brak stopni' : 'zero stairs'))
+                      : (activeRoute.stairsCount > 0
+                          ? '${isPL ? "stopni" : "stairs"} (brak rampy)'
+                          : (isPL ? 'brak stopni' : 'zero stairs')),
                   highlightColor: activeRoute.type == RouteType.accessible
                       ? const Color(0xFF34D399)
-                      : const Color(0xFFF87171),
+                      : (activeRoute.stairsCount > 0 ? const Color(0xFFF87171) : const Color(0xFF34D399)),
                 ),
                 _buildMetric(
                   icon: Icons.speed,
                   value: '${activeRoute.accessibilityScore}/100',
                   label: state.tr('smoothness'),
+                  highlightColor: activeRoute.accessibilityScore >= 80
+                      ? const Color(0xFF34D399)
+                      : const Color(0xFFF87171),
                 ),
               ],
             ),
           ),
+
+          // 5.5 Opis nawierzchni
+          if (activeRoute.surfaceSummaryPl.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 1, 14, 3),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.texture,
+                    size: 12,
+                    color: activeRoute.type == RouteType.accessible
+                        ? const Color(0xFF34D399)
+                        : const Color(0xFFF87171),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isPL ? activeRoute.surfaceSummaryPl : activeRoute.surfaceSummaryEn,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // 6. Przycisk Audytu Street View
           if (activeRoute.audits.isNotEmpty)

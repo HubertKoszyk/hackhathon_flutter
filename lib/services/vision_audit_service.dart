@@ -16,7 +16,7 @@ class VisionAuditService {
   static Future<bool> testApiKey(String key) async {
     try {
       final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=$key',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$key',
       );
       final response = await http.post(
         url,
@@ -66,7 +66,7 @@ class VisionAuditService {
         }
 
         final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=$key',
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$key',
         );
 
         final prompt = '''
