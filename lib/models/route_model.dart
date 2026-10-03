@@ -21,6 +21,12 @@ class RouteModel {
   final String surfaceSummaryEn;
   final List<AccessibilityAudit> audits;
   final Color polylineColor;
+  final List<String> profileHighlightsPl;
+  final List<String> profileHighlightsEn;
+  final String? detectedBarrierPl;
+  final String? detectedBarrierEn;
+  final String? bypassReasonPl;
+  final String? bypassReasonEn;
 
   const RouteModel({
     required this.id,
@@ -36,6 +42,12 @@ class RouteModel {
     required this.surfaceSummaryEn,
     required this.audits,
     required this.polylineColor,
+    this.profileHighlightsPl = const [],
+    this.profileHighlightsEn = const [],
+    this.detectedBarrierPl,
+    this.detectedBarrierEn,
+    this.bypassReasonPl,
+    this.bypassReasonEn,
   });
 
   String getDistanceString() {

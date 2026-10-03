@@ -67,7 +67,7 @@ class MainScreen extends StatelessWidget {
           // 3. Pływający przycisk zgłaszania przeszkód ("Crowdsourced AI")
           Positioned(
             right: 16,
-            bottom: state.selectedParking != null ? 220 : 260,
+            bottom: state.selectedParking != null ? 220 : 315,
             child: FloatingActionButton(
               heroTag: 'report_barrier_btn',
               backgroundColor: const Color(0xFF0284C7),

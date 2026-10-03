@@ -13,73 +13,75 @@ class TopBar extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Górny pasek tytułowy z logo i przełącznikami
+            // Górny pasek tytułowy z logo i kompaktowymi przełącznikami
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B).withOpacity(0.95), // Deep navy
-                borderRadius: BorderRadius.circular(18),
+                color: const Color(0xFF1E293B).withValues(alpha: 0.96), // Deep navy
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    blurRadius: 16,
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),
                 ],
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: Row(
                 children: [
                   // Logo / Ikona
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF0EA5E9), Color(0xFF10B981)],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.accessible_forward,
                       color: Colors.white,
-                      size: 24,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   // Tytuł i miasto
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
                           children: [
                             Text(
                               state.tr('app_title'),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7).withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.5)),
+                                color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.5)),
                               ),
                               child: const Text(
                                 'KRAKÓW',
                                 style: TextStyle(
                                   color: Color(0xFF38BDF8),
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -89,83 +91,114 @@ class TopBar extends StatelessWidget {
                         Text(
                           state.tr('app_subtitle'),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 10.5,
                           ),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ],
                     ),
                   ),
-                  // Przycisk statusu Gemini AI API
-                  IconButton(
-                    icon: Stack(
-                      children: [
-                        const Icon(Icons.auto_awesome, color: Color(0xFF38BDF8), size: 20),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: VisionAuditService.hasApiKey
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
+                  const SizedBox(width: 6),
+                  // Grupa kompaktowych przycisków akcji
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Przycisk statusu Gemini AI API
+                      InkWell(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const ApiKeyDialog(),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              const Icon(Icons.auto_awesome, color: Color(0xFF38BDF8), size: 16),
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: VisionAuditService.hasApiKey
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFF59E0B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    tooltip: 'Google Gemini API Key',
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => const ApiKeyDialog(),
-                      );
-                    },
-                  ),
-                  // Przycisk warstwy parkingów
-                  IconButton(
-                    icon: Icon(
-                      Icons.local_parking,
-                      color: state.showParkingLayer
-                          ? const Color(0xFF38BDF8)
-                          : Colors.white38,
-                    ),
-                    tooltip: state.tr('parking_layer'),
-                    onPressed: state.toggleParkingLayer,
-                  ),
-                  // Przełącznik języka (PL / EN)
-                  InkWell(
-                    onTap: state.toggleLanguage,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white24),
                       ),
-                      child: Row(
-                        children: [
-                          Text(
+                      const SizedBox(width: 6),
+                      // Przycisk warstwy parkingów
+                      InkWell(
+                        onTap: state.toggleParkingLayer,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: state.showParkingLayer
+                                ? const Color(0xFF0284C7).withValues(alpha: 0.3)
+                                : Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: state.showParkingLayer
+                                  ? const Color(0xFF38BDF8)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.local_parking,
+                            size: 18,
+                            color: state.showParkingLayer
+                                ? const Color(0xFF38BDF8)
+                                : Colors.white54,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Przełącznik języka (PL / EN)
+                      InkWell(
+                        onTap: state.toggleLanguage,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: Text(
                             state.language == 'pl' ? '🇵🇱 PL' : '🇬🇧 EN',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             // Profile mobilności (Wózek, O kuli / Senior, Wózek dziecięcy)
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -178,7 +211,7 @@ class TopBar extends StatelessWidget {
                     isSelected: state.profile == MobilityProfile.wheelchair,
                     onTap: () => state.setProfile(MobilityProfile.wheelchair),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildProfileChip(
                     context,
                     label: state.tr('profile_cane'),
@@ -186,7 +219,7 @@ class TopBar extends StatelessWidget {
                     isSelected: state.profile == MobilityProfile.cane,
                     onTap: () => state.setProfile(MobilityProfile.cane),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildProfileChip(
                     context,
                     label: state.tr('profile_stroller'),
@@ -212,36 +245,36 @@ class TopBar extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF10B981) // Emerald
-              : const Color(0xFF1E293B).withOpacity(0.85),
-          borderRadius: BorderRadius.circular(20),
+              : const Color(0xFF1E293B).withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF34D399) : Colors.white12,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withOpacity(0.35),
-                    blurRadius: 10,
+                    color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                    blurRadius: 8,
                   )
                 ]
               : [],
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: Colors.white),
-            const SizedBox(width: 6),
+            Icon(icon, size: 15, color: Colors.white),
+            const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),

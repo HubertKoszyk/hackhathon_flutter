@@ -17,13 +17,15 @@ class AppState extends ChangeNotifier {
   int _selectedRouteIndex = 0; // 0 = Accessible, 1 = Standard
   ParkingSpot? _selectedParking;
   AccessibilityAudit? _activeAudit;
+  LatLng? _customPin;
+  bool _isLoadingDynamicRoute = false;
 
   late List<ParkingSpot> _parkingSpots;
   late List<RouteModel> _routes;
 
   AppState() {
     _parkingSpots = KrakowDataService.getParkingSpots();
-    _routes = RoutingService.getRoutesForPreset(_selectedPresetId);
+    _routes = RoutingService.getRoutesForPreset(_selectedPresetId, _profile);
   }
 
   // Getters
@@ -34,6 +36,8 @@ class AppState extends ChangeNotifier {
   int get selectedRouteIndex => _selectedRouteIndex;
   ParkingSpot? get selectedParking => _selectedParking;
   AccessibilityAudit? get activeAudit => _activeAudit;
+  LatLng? get customPin => _customPin;
+  bool get isLoadingDynamicRoute => _isLoadingDynamicRoute;
 
   List<ParkingSpot> get parkingSpots => _parkingSpots;
   List<RouteModel> get routes => _routes;
@@ -55,8 +59,16 @@ class AppState extends ChangeNotifier {
   }
 
   void setProfile(MobilityProfile newProfile) {
-    _profile = newProfile;
-    notifyListeners();
+    if (_profile != newProfile) {
+      _profile = newProfile;
+      // Natychmiast przelicz trasy, wskaźniki i bariery pod nowy profil!
+      if (_customPin != null) {
+        routeToCustomPoint(_customPin!);
+      } else {
+        _routes = RoutingService.getRoutesForPreset(_selectedPresetId, _profile);
+      }
+      notifyListeners();
+    }
   }
 
   void toggleParkingLayer() {
@@ -66,7 +78,8 @@ class AppState extends ChangeNotifier {
 
   void selectPreset(String presetId) {
     _selectedPresetId = presetId;
-    _routes = RoutingService.getRoutesForPreset(presetId);
+    _customPin = null;
+    _routes = RoutingService.getRoutesForPreset(presetId, _profile);
     _selectedRouteIndex = 0;
     _selectedParking = null;
     notifyListeners();
@@ -84,6 +97,39 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCustomPin(LatLng point) {
+    _customPin = point;
+    _selectedParking = null;
+    notifyListeners();
+  }
+
+  void clearCustomPin() {
+    _customPin = null;
+    notifyListeners();
+  }
+
+  Future<void> routeToCustomPoint(LatLng destination, [String? targetName]) async {
+    _isLoadingDynamicRoute = true;
+    _customPin = destination;
+    _selectedParking = null;
+    notifyListeners();
+
+    // Start z aktualnej lokalizacji / Dworca Głównego w Krakowie
+    const startPoint = LatLng(50.0668, 19.9464);
+
+    final dynamicRoutes = await RoutingService.calculateDynamicRoute(
+      start: startPoint,
+      end: destination,
+      profile: _profile,
+      destinationName: targetName ?? 'Wybrany punkt w Krakowie',
+    );
+
+    _routes = dynamicRoutes;
+    _selectedRouteIndex = 0;
+    _isLoadingDynamicRoute = false;
+    notifyListeners();
+  }
+
   void openAudit(AccessibilityAudit audit) {
     _activeAudit = audit;
     notifyListeners();
@@ -96,7 +142,7 @@ class AppState extends ChangeNotifier {
 
   void planRouteFromParking(ParkingSpot spot) {
     _selectedParking = null;
-    // Wyznacz trasę od wybranej koperty do Sukiennic
+    _customPin = null;
     final start = spot.location;
     const dest = LatLng(50.0617, 19.9373); // Rynek Sukiennice
 
@@ -108,7 +154,7 @@ class AppState extends ChangeNotifier {
       polylineColor: const Color(0xFF10B981),
       distanceMeters: 620,
       durationMinutes: 8,
-      accessibilityScore: 98,
+      accessibilityScore: _profile == MobilityProfile.wheelchair ? 98 : (_profile == MobilityProfile.cane ? 96 : 97),
       stairsAvoided: 12,
       surfaceSummaryPl: 'Nawierzchnia sprawdzona przez AI. 100% obniżonych krawężników.',
       surfaceSummaryEn: 'AI-verified surface. 100% dropped curbs.',
@@ -140,6 +186,11 @@ class AppState extends ChangeNotifier {
           aiVerdictEn: 'Safe curb cut directly connecting parking to pedestrian zone.',
         ),
       ],
+      profileHighlightsPl: RoutingService.presets.first.titlePl.isNotEmpty
+          ? (_profile == MobilityProfile.wheelchair
+              ? ['Bezpośredni zjazd z koperty', '100% ramp']
+              : ['Krótki dystans do Rynku', 'Brak schodów'])
+          : [],
     );
 
     _routes = [customAccessibleRoute];

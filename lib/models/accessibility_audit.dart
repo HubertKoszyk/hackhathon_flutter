@@ -14,6 +14,13 @@ class AccessibilityAudit {
   final List<String> hazards;
   final String aiVerdictPl;
   final String aiVerdictEn;
+  final String? bypassPhotoUrl;
+  final String? bypassTitlePl;
+  final String? bypassTitleEn;
+  final String? bypassDescriptionPl;
+  final String? bypassDescriptionEn;
+  final String? profileImpactPl;
+  final String? profileImpactEn;
 
   const AccessibilityAudit({
     required this.id,
@@ -29,5 +36,12 @@ class AccessibilityAudit {
     required this.hazards,
     required this.aiVerdictPl,
     required this.aiVerdictEn,
+    this.bypassPhotoUrl,
+    this.bypassTitlePl,
+    this.bypassTitleEn,
+    this.bypassDescriptionPl,
+    this.bypassDescriptionEn,
+    this.profileImpactPl,
+    this.profileImpactEn,
   });
 }

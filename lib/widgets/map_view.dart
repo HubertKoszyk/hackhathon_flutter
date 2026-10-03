@@ -18,14 +18,18 @@ class _KrakMapViewState extends State<KrakMapView> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final activeRoute = state.currentRoute;
+    final isPL = state.language == 'pl';
 
     return FlutterMap(
       mapController: _mapController,
-      options: const MapOptions(
-        initialCenter: LatLng(50.0635, 19.9405), // Centrum Krakowa (między Dworcem a Rynkiem)
+      options: MapOptions(
+        initialCenter: const LatLng(50.0635, 19.9405), // Centrum Krakowa
         initialZoom: 15.2,
         minZoom: 12.0,
         maxZoom: 18.5,
+        onTap: (tapPosition, latLng) {
+          state.setCustomPin(latLng);
+        },
       ),
       children: [
         // Podkład mapy OpenStreetMap (Kraków)
@@ -46,7 +50,7 @@ class _KrakMapViewState extends State<KrakMapView> {
               strokeWidth: isSelected ? 6.5 : 3.5,
               color: isSelected
                   ? route.polylineColor
-                  : route.polylineColor.withOpacity(0.35),
+                  : route.polylineColor.withValues(alpha: 0.35),
             );
           }).toList(),
         ),
@@ -70,7 +74,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -102,7 +106,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                     border: Border.all(color: Colors.white, width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF10B981).withOpacity(0.4),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.4),
                         blurRadius: 8,
                       ),
                     ],
@@ -124,7 +128,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                     border: Border.all(color: Colors.white, width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                         blurRadius: 8,
                       ),
                     ],
@@ -136,40 +140,113 @@ class _KrakMapViewState extends State<KrakMapView> {
               ),
             ],
 
-            // 3. Punkty kontrolne AI Vision (Checkpoints)
+            // 3. Punkty kontrolne / Przeszkody AI Street View
             if (activeRoute != null)
               ...activeRoute.audits.map(
                 (audit) => Marker(
                   point: audit.location,
-                  width: 46,
-                  height: 46,
+                  width: 52,
+                  height: 52,
                   child: GestureDetector(
                     onTap: () => state.openAudit(audit),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: audit.isAccessible
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (audit.isAccessible
-                                    ? const Color(0xFF10B981)
-                                    : const Color(0xFFEF4444))
-                                .withOpacity(0.5),
-                            blurRadius: 10,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: audit.isAccessible
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (audit.isAccessible
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444))
+                                    .withValues(alpha: 0.6),
+                                blurRadius: 12,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          audit.isAccessible ? Icons.verified : Icons.warning_amber_rounded,
-                          color: Colors.white,
-                          size: 24,
+                          child: Center(
+                            child: Icon(
+                              audit.isAccessible ? Icons.verified : Icons.warning_amber_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                        // Badge aparatu Street View
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0F172A),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.streetview,
+                              color: Color(0xFF38BDF8),
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            // 4. Dotknięty punkt docelowy na mapie (Custom Pin)
+            if (state.customPin != null)
+              Marker(
+                point: state.customPin!,
+                width: 190,
+                height: 75,
+                child: GestureDetector(
+                  onTap: () => state.routeToCustomPoint(state.customPin!),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFF59E0B)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.directions, color: Color(0xFFF59E0B), size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              isPL ? 'Wyznacz trasę tutaj' : 'Route here',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      const Icon(
+                        Icons.location_pin,
+                        color: Color(0xFFF59E0B),
+                        size: 34,
+                      ),
+                    ],
                   ),
                 ),
               ),
