@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:hackhathon_flutter/theme.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../models/transit_route_info.dart';
@@ -41,7 +42,7 @@ class _KrakMapViewState extends State<KrakMapView> {
         initialZoom: 15.2,
         minZoom: 12.0,
         maxZoom: 18.5,
-        onTap: (tapPosition, latLng) {
+        onLongPress: (tapPosition, latLng) {
           state.setCustomPin(latLng);
         },
       ),
@@ -56,7 +57,9 @@ class _KrakMapViewState extends State<KrakMapView> {
         PolylineLayer(
           polylines: [
             for (final entry in state.routes.asMap().entries) ...[
-              if (entry.value.isTransit && entry.value.transitInfo != null && entry.key == state.selectedRouteIndex) ...[
+              if (entry.value.isTransit &&
+                  entry.value.transitInfo != null &&
+                  entry.key == state.selectedRouteIndex) ...[
                 // Dojście piesze do przystanku początkowego (Zielona linia)
                 Polyline(
                   points: entry.value.transitInfo!.walkToStopPolyline,
@@ -78,7 +81,9 @@ class _KrakMapViewState extends State<KrakMapView> {
               ] else ...[
                 Polyline(
                   points: entry.value.coordinates,
-                  strokeWidth: entry.key == state.selectedRouteIndex ? 6.5 : 3.5,
+                  strokeWidth: entry.key == state.selectedRouteIndex
+                      ? 6.5
+                      : 3.5,
                   color: entry.key == state.selectedRouteIndex
                       ? entry.value.polylineColor
                       : entry.value.polylineColor.withValues(alpha: 0.35),
@@ -102,16 +107,12 @@ class _KrakMapViewState extends State<KrakMapView> {
                     onTap: () => state.selectParking(spot),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0284C7), // Blue
+                        color: const Color.fromARGB(255, 0, 94, 255), // Blue
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: const Color.fromARGB(255, 0, 77, 209),
+                          width: 2.0,
+                        ),
                       ),
                       child: const Center(
                         child: Icon(
@@ -136,38 +137,40 @@ class _KrakMapViewState extends State<KrakMapView> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                        blurRadius: 8,
-                      ),
-                    ],
+                    border: Border.all(
+                      color: const Color.fromARGB(255, 6, 139, 95),
+                      width: 2.0,
+                    ),
                   ),
                   child: const Center(
-                    child: Icon(Icons.trip_origin, color: Colors.white, size: 22),
+                    child: Icon(
+                      Icons.trip_origin,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
               ),
               // Meta Marker
               Marker(
                 point: activeRoute.coordinates.last,
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6), // Purple
+                    color: const Color.fromARGB(255, 76, 0, 255), // Purple
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
-                        blurRadius: 8,
-                      ),
-                    ],
+                    border: Border.all(
+                      color: const Color.fromARGB(255, 49, 0, 163),
+                      width: 2,
+                    ),
                   ),
                   child: const Center(
-                    child: Icon(Icons.location_on, color: Colors.white, size: 24),
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -191,10 +194,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
-                            colors: [
-                              const Color(0xFF10B981).withValues(alpha: 0.45),
-                              const Color(0xFF10B981).withValues(alpha: 0.0),
-                            ],
+                            colors: [kColorScheme.inverseSurface],
                           ),
                         ),
                       ),
@@ -205,14 +205,10 @@ class _KrakMapViewState extends State<KrakMapView> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF10B981),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          border: Border.all(
+                            color: const Color.fromARGB(255, 6, 139, 95),
+                            width: 2,
+                          ),
                         ),
                         child: const Center(
                           child: Icon(
@@ -258,27 +254,37 @@ class _KrakMapViewState extends State<KrakMapView> {
               ),
 
             // 2.7 Przystanki komunikacji miejskiej GTFS (dla aktywnej trasy tranzytowej)
-            if (activeRoute != null && activeRoute.isTransit && activeRoute.transitInfo != null) ...[
+            if (activeRoute != null &&
+                activeRoute.isTransit &&
+                activeRoute.transitInfo != null) ...[
               // Przystanek początkowy (Wsiadanie)
               Marker(
-                point: activeRoute.transitInfo!.transitLeg.departureStop.location,
+                point:
+                    activeRoute.transitInfo!.transitLeg.departureStop.location,
                 width: 140,
                 height: 48,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F172A),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF38BDF8), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFF38BDF8),
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            activeRoute.transitInfo!.transitLeg.vehicleType == TransitVehicleType.tram
+                            activeRoute.transitInfo!.transitLeg.vehicleType ==
+                                    TransitVehicleType.tram
                                 ? Icons.tram
                                 : Icons.directions_bus,
                             size: 11,
@@ -288,7 +294,11 @@ class _KrakMapViewState extends State<KrakMapView> {
                           Flexible(
                             child: Text(
                               '${activeRoute.transitInfo!.transitLeg.lineName} • ${activeRoute.transitInfo!.transitLeg.departureStop.name}',
-                              style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -304,7 +314,11 @@ class _KrakMapViewState extends State<KrakMapView> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
-                      child: const Icon(Icons.departure_board, color: Colors.white, size: 10),
+                      child: const Icon(
+                        Icons.departure_board,
+                        color: Colors.white,
+                        size: 10,
+                      ),
                     ),
                   ],
                 ),
@@ -319,15 +333,25 @@ class _KrakMapViewState extends State<KrakMapView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F172A),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF10B981), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFF10B981),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         'Wysiadka: ${activeRoute.transitInfo!.transitLeg.arrivalStop.name}',
-                        style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -340,16 +364,30 @@ class _KrakMapViewState extends State<KrakMapView> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
-                      child: const Icon(Icons.transfer_within_a_station, color: Colors.white, size: 10),
+                      child: const Icon(
+                        Icons.transfer_within_a_station,
+                        color: Colors.white,
+                        size: 10,
+                      ),
                     ),
                   ],
                 ),
               ),
 
               // Przystanki pośrednie na trasie
-              if (activeRoute.transitInfo!.transitLeg.intermediateStops.length > 2)
-                for (final stop in activeRoute.transitInfo!.transitLeg.intermediateStops
-                    .sublist(1, activeRoute.transitInfo!.transitLeg.intermediateStops.length - 1))
+              if (activeRoute.transitInfo!.transitLeg.intermediateStops.length >
+                  2)
+                for (final stop
+                    in activeRoute.transitInfo!.transitLeg.intermediateStops
+                        .sublist(
+                          1,
+                          activeRoute
+                                  .transitInfo!
+                                  .transitLeg
+                                  .intermediateStops
+                                  .length -
+                              1,
+                        ))
                   Marker(
                     point: stop.location,
                     width: 12,
@@ -360,7 +398,10 @@ class _KrakMapViewState extends State<KrakMapView> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.5),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                          ),
                         ],
                       ),
                     ),
@@ -384,23 +425,19 @@ class _KrakMapViewState extends State<KrakMapView> {
                           height: 44,
                           decoration: BoxDecoration(
                             color: audit.isAccessible
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444),
+                                ? kColorScheme.inverseSurface
+                                : kColorScheme.error,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (audit.isAccessible
-                                        ? const Color(0xFF10B981)
-                                        : const Color(0xFFEF4444))
-                                    .withValues(alpha: 0.6),
-                                blurRadius: 12,
-                              ),
-                            ],
+                            border: Border.all(
+                              color: Colors.lightGreen,
+                              width: 2,
+                            ),
                           ),
                           child: Center(
                             child: Icon(
-                              audit.isAccessible ? Icons.verified : Icons.warning_amber_rounded,
+                              audit.isAccessible
+                                  ? Icons.verified
+                                  : Icons.warning_amber_rounded,
                               color: Colors.white,
                               size: 22,
                             ),
@@ -411,7 +448,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                           right: 0,
                           top: 0,
                           child: Container(
-                            padding: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.all(4.0),
                             decoration: const BoxDecoration(
                               color: Color(0xFF0F172A),
                               shape: BoxShape.circle,
@@ -436,41 +473,30 @@ class _KrakMapViewState extends State<KrakMapView> {
                 width: 190,
                 height: 75,
                 child: GestureDetector(
-                  onTap: () => state.planRouteBetweenSelectedPoints(showLoader: true),
+                  onTap: () =>
+                      state.planRouteBetweenSelectedPoints(showLoader: true),
                   child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: kColorScheme.primary,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFF59E0B)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                            ),
-                          ],
+                          border: Border.all(color: kColorScheme.tertiary),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.directions, color: Color(0xFFF59E0B), size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              isPL ? 'Wyznacz trasę tutaj' : 'Route here',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            Text(isPL ? 'Wyznaczam trasę tutaj' : 'Route here'),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.location_pin,
-                        color: Color(0xFFF59E0B),
+                        color: kColorScheme.primary,
                         size: 34,
                       ),
                     ],
