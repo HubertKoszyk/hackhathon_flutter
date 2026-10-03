@@ -21,6 +21,9 @@ class AccessibilityAudit {
   final String? bypassDescriptionEn;
   final String? profileImpactPl;
   final String? profileImpactEn;
+  final bool isLiveGeoPhoto;
+  final String? photoSourceAttribution;
+  final String? photoTitle;
 
   const AccessibilityAudit({
     required this.id,
@@ -43,5 +46,8 @@ class AccessibilityAudit {
     this.bypassDescriptionEn,
     this.profileImpactPl,
     this.profileImpactEn,
+    this.isLiveGeoPhoto = false,
+    this.photoSourceAttribution,
+    this.photoTitle,
   });
 }

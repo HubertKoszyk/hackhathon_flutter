@@ -26,7 +26,19 @@ class _AuditModalState extends State<AuditModal> {
         ? audit.bypassPhotoUrl!
         : audit.photoUrl;
 
-    final isShowingBarrier = !_showBypassPhoto && !audit.isAccessible;
+    // Jeżeli jesteśmy na trasie dostępnej (audit.isAccessible == true):
+    // _showBypassPhoto == false -> pokazujemy zdjęcie trasy dostępnej (isShowingBarrier = false)
+    // _showBypassPhoto == true -> pokazujemy zdjęcie ominiętej bariery (isShowingBarrier = true)
+    // Jeżeli jesteśmy na trasie ze schodami/barierą (audit.isAccessible == false):
+    // _showBypassPhoto == false -> pokazujemy zdjęcie bariery (isShowingBarrier = true)
+    // _showBypassPhoto == true -> pokazujemy zdjęcie objazdu (isShowingBarrier = false)
+    final bool isShowingBarrier = audit.isAccessible
+        ? _showBypassPhoto
+        : !_showBypassPhoto;
+
+    final headerTitle = (isShowingBarrier && audit.isAccessible && audit.bypassTitlePl != null)
+        ? (isPL ? audit.bypassTitlePl! : (audit.bypassTitleEn ?? audit.bypassTitlePl!))
+        : audit.checkpointName;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -87,7 +99,9 @@ class _AuditModalState extends State<AuditModal> {
                             children: [
                               Text(
                                 isShowingBarrier
-                                    ? (isPL ? 'WYKRYTA PRZESZKODA' : 'OBSTACLE DETECTED')
+                                    ? (audit.isAccessible
+                                        ? (isPL ? 'OMINIĘTA PRZESZKODA' : 'AVOIDED OBSTACLE')
+                                        : (isPL ? 'WYKRYTA PRZESZKODA' : 'OBSTACLE DETECTED'))
                                     : (isPL ? 'AUDYT STREET VIEW' : 'STREET VIEW AUDIT'),
                                 style: TextStyle(
                                   color: isShowingBarrier
@@ -113,7 +127,7 @@ class _AuditModalState extends State<AuditModal> {
                             ],
                           ),
                           Text(
-                            audit.checkpointName,
+                            headerTitle,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14.5,
@@ -152,17 +166,29 @@ class _AuditModalState extends State<AuditModal> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               decoration: BoxDecoration(
                                 color: !_showBypassPhoto
-                                    ? const Color(0xFF7F1D1D)
+                                    ? (audit.isAccessible
+                                        ? const Color(0xFF065F46)
+                                        : const Color(0xFF7F1D1D))
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.camera_alt, color: Color(0xFFF87171), size: 14),
+                                  Icon(
+                                    audit.isAccessible
+                                        ? Icons.check_circle
+                                        : Icons.camera_alt,
+                                    color: audit.isAccessible
+                                        ? const Color(0xFF34D399)
+                                        : const Color(0xFFF87171),
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    isPL ? 'Bariera na trasie' : 'Barrier on route',
+                                    audit.isAccessible
+                                        ? (isPL ? 'Trakt KrakAccess (Płasko)' : 'KrakAccess Path (Flat)')
+                                        : (isPL ? 'Bariera na trasie' : 'Barrier on route'),
                                     style: TextStyle(
                                       color: !_showBypassPhoto ? Colors.white : Colors.white60,
                                       fontSize: 11,
@@ -182,17 +208,29 @@ class _AuditModalState extends State<AuditModal> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               decoration: BoxDecoration(
                                 color: _showBypassPhoto
-                                    ? const Color(0xFF065F46)
+                                    ? (audit.isAccessible
+                                        ? const Color(0xFF7F1D1D)
+                                        : const Color(0xFF065F46))
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.check_circle, color: Color(0xFF34D399), size: 14),
+                                  Icon(
+                                    audit.isAccessible
+                                        ? Icons.visibility
+                                        : Icons.check_circle,
+                                    color: audit.isAccessible
+                                        ? const Color(0xFFF87171)
+                                        : const Color(0xFF34D399),
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    isPL ? 'Objazd KrakAccess' : 'KrakAccess Bypass',
+                                    audit.isAccessible
+                                        ? (isPL ? 'Ominięta przeszkoda' : 'Avoided Obstacle')
+                                        : (isPL ? 'Objazd KrakAccess' : 'KrakAccess Bypass'),
                                     style: TextStyle(
                                       color: _showBypassPhoto ? Colors.white : Colors.white60,
                                       fontSize: 11,
@@ -214,27 +252,9 @@ class _AuditModalState extends State<AuditModal> {
                 children: [
                   ClipRRect(
                     child: SizedBox(
-                      height: 200,
+                      height: 210,
                       width: double.infinity,
-                      child: Image.network(
-                        currentPhoto,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (ctx, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: Colors.black26,
-                            child: const Center(
-                              child: CircularProgressIndicator(color: Color(0xFF38BDF8)),
-                            ),
-                          );
-                        },
-                        errorBuilder: (ctx, err, stack) => Container(
-                          color: const Color(0xFF1E293B),
-                          child: const Center(
-                            child: Icon(Icons.streetview, color: Colors.white38, size: 48),
-                          ),
-                        ),
-                      ),
+                      child: _buildStreetViewImage(currentPhoto, isShowingBarrier),
                     ),
                   ),
 
@@ -246,33 +266,81 @@ class _AuditModalState extends State<AuditModal> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.1),
-                            Colors.black.withValues(alpha: 0.75),
+                            Colors.black.withValues(alpha: 0.15),
+                            Colors.black.withValues(alpha: 0.78),
                           ],
                         ),
                       ),
                     ),
                   ),
 
-                  // Znacznik Street View Camera
+                  // HUD: Koordynaty GPS na żywo
+                  Positioned(
+                    top: 10,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on, color: Color(0xFF38BDF8), size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Znacznik Street View Camera lub Live GeoSearch
                   Positioned(
                     top: 10,
                     right: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
+                        color: (isShowingBarrier && audit.isLiveGeoPhoto)
+                            ? const Color(0xFF0369A1).withValues(alpha: 0.9)
+                            : Colors.black.withValues(alpha: 0.75),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white24),
+                        border: Border.all(
+                          color: (isShowingBarrier && audit.isLiveGeoPhoto)
+                              ? const Color(0xFF38BDF8)
+                              : Colors.white24,
+                        ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.streetview, color: Color(0xFF38BDF8), size: 13),
-                          SizedBox(width: 4),
+                          Icon(
+                            (isShowingBarrier && audit.isLiveGeoPhoto)
+                                ? Icons.public
+                                : Icons.streetview,
+                            color: const Color(0xFF38BDF8),
+                            size: 13,
+                          ),
+                          const SizedBox(width: 4),
                           Text(
-                            'Kraków Street View',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            (isShowingBarrier && audit.isLiveGeoPhoto)
+                                ? (isPL ? 'Pobrane na żywo • GeoSearch' : 'Live GeoPhoto • GeoSearch')
+                                : 'Kraków Street View • HD',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -282,28 +350,70 @@ class _AuditModalState extends State<AuditModal> {
                   // Bounding frame jeśli wykryto barierę
                   if (isShowingBarrier)
                     Positioned(
-                      top: 40,
-                      left: 30,
-                      right: 30,
-                      bottom: 50,
+                      top: 45,
+                      left: 25,
+                      right: 25,
+                      bottom: 52,
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: const Color(0xFFEF4444), width: 2),
                           borderRadius: BorderRadius.circular(8),
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.08),
                         ),
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            color: const Color(0xFFEF4444),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              borderRadius: BorderRadius.only(
+                                bottomRight: Radius.circular(6),
+                              ),
+                            ),
                             child: Text(
                               isPL
-                                  ? (audit.stairsDetected ? 'STOPNIE / SCHODY' : 'TRUDNA NAWIERZCHNIA')
+                                  ? (audit.stairsDetected || audit.stairsCount > 0
+                                      ? 'STOPNIE / SCHODY'
+                                      : 'TRUDNA NAWIERZCHNIA')
                                   : 'ARCHITECTURAL HAZARD',
-                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
+                        ),
+                      ),
+                    ),
+
+                  // Znacznik zweryfikowanej dostępności
+                  if (!isShowingBarrier)
+                    Positioned(
+                      top: 45,
+                      left: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF065F46).withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF34D399)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.verified, color: Color(0xFF34D399), size: 13),
+                            const SizedBox(width: 4),
+                            Text(
+                              isPL ? 'TRAKT BEZ BARIER (WCAG)' : 'BARRIER-FREE ROUTE (WCAG)',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -334,9 +444,11 @@ class _AuditModalState extends State<AuditModal> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            _showBypassPhoto
-                                ? (isPL ? 'Objazd: 98% Bezpieczny' : 'Bypass: 98% Safe')
-                                : '${audit.score}/100 ${isPL ? 'Wskaźnik dostępności' : 'Score'}',
+                            isShowingBarrier
+                                ? (audit.isAccessible
+                                    ? (isPL ? 'Bariera na trasie prostej: 25/100' : 'Direct path barrier: 25/100')
+                                    : '${audit.score}/100 ${isPL ? 'Wskaźnik dostępności' : 'Score'}')
+                                : (isPL ? 'Trakt KrakAccess: 98% Bezpieczny' : 'KrakAccess Path: 98% Safe (WCAG)'),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11.5,
@@ -359,40 +471,42 @@ class _AuditModalState extends State<AuditModal> {
                     _buildFeatureRow(
                       icon: Icons.stairs,
                       label: isPL ? 'Schody' : 'Stairs',
-                      value: _showBypassPhoto
-                          ? (isPL ? '0 stopni (Płasko)' : '0 steps (Flat)')
-                          : (audit.stairsDetected
+                      value: isShowingBarrier
+                          ? (audit.stairsCount > 0
                               ? (isPL
-                                  ? 'Wykryto ${audit.stairsCount} stopni (Brak windy!)'
-                                  : '${audit.stairsCount} steps detected (No lift!)')
-                              : (isPL ? 'Brak stopni (Płasko)' : 'Zero steps (Flat)')),
-                      isPositive: _showBypassPhoto || !audit.stairsDetected,
+                                  ? 'Wykryto ${audit.stairsCount} stopni (Brak windy / rampy!)'
+                                  : '${audit.stairsCount} steps detected (No ramp / lift!)')
+                              : (isPL ? '0 stopni (Bariera krawężnikowa / nawierzchnia)' : '0 steps (Curbs & surface barrier)'))
+                          : (isPL ? '0 stopni (Płasko)' : '0 steps (Flat)'),
+                      isPositive: !isShowingBarrier,
                     ),
                     const SizedBox(height: 8),
                     _buildFeatureRow(
                       icon: Icons.straighten,
                       label: isPL ? 'Krawężnik' : 'Curb Height',
-                      value: _showBypassPhoto
-                          ? (isPL ? 'Zjazd 0-1 cm' : 'Dropped curb 0-1 cm')
-                          : audit.curbStatus,
-                      isPositive: _showBypassPhoto || audit.isAccessible,
+                      value: isShowingBarrier
+                          ? (audit.curbStatus.isNotEmpty
+                              ? audit.curbStatus
+                              : (isPL ? 'Krawężnik 12-14 cm' : '12-14 cm curb'))
+                          : (isPL ? 'Zjazd 0-1 cm zlicowany z jezdnią' : 'Dropped curb 0-1 cm flush'),
+                      isPositive: !isShowingBarrier,
                     ),
                     const SizedBox(height: 8),
                     _buildFeatureRow(
                       icon: Icons.texture,
                       label: isPL ? 'Nawierzchnia' : 'Surface Type',
-                      value: _showBypassPhoto
-                          ? (isPL ? 'Gładkie płyty granitowe' : 'Smooth granite slabs')
-                          : audit.surfaceType,
-                      isPositive: _showBypassPhoto ||
-                          (!audit.surfaceType.contains('kocie łby') &&
-                              !audit.surfaceType.contains('Schody')),
+                      value: isShowingBarrier
+                          ? (audit.surfaceType.isNotEmpty
+                              ? audit.surfaceType
+                              : (isPL ? 'Nierówna kostka / schody' : 'Uneven cobblestone / stairs'))
+                          : (isPL ? 'Gładkie płyty granitowe / asfalt szlifowany' : 'Smooth granite slabs / asphalt'),
+                      isPositive: !isShowingBarrier,
                     ),
 
                     const SizedBox(height: 12),
 
                     // Wpływ na wybrany profil mobilności
-                    if (audit.profileImpactPl != null && !_showBypassPhoto) ...[
+                    if (audit.profileImpactPl != null && isShowingBarrier) ...[
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -416,6 +530,53 @@ class _AuditModalState extends State<AuditModal> {
                                   fontSize: 11,
                                   height: 1.3,
                                 ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Informacja o pobraniu zdjęcia w czasie rzeczywistym z Wikimedia Commons
+                    if (isShowingBarrier && audit.isLiveGeoPhoto) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0369A1).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.travel_explore, color: Color(0xFF38BDF8), size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isPL ? 'ZDJĘCIE POBRANE NA ŻYWO (GPS)' : 'LIVE GEOSEARCH PHOTO (GPS)',
+                                    style: const TextStyle(
+                                      color: Color(0xFF38BDF8),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isPL
+                                        ? 'Fotografia pobrana w czasie rzeczywistym z Wikimedia Commons GeoSearch dla współrzędnych tej przeszkody (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nObiekt: ${audit.photoTitle ?? "Okolice punktu"}\nAutor: ${audit.photoSourceAttribution ?? "Creative Commons"}'
+                                        : 'Real-time photograph fetched from Wikimedia Commons GeoSearch for obstacle coordinates (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nSubject: ${audit.photoTitle ?? "Location"}\nAuthor: ${audit.photoSourceAttribution ?? "Creative Commons"}',
+                                    style: const TextStyle(
+                                      color: Color(0xFFBAE6FD),
+                                      fontSize: 10,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -467,11 +628,17 @@ class _AuditModalState extends State<AuditModal> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  _showBypassPhoto
-                                      ? (isPL
-                                          ? 'KrakAccess skierował Cię bezpiecznym obejściem naziemnym bez barier architektonicznych.'
-                                          : 'KrakAccess routed you through a barrier-free ground crossing.')
-                                      : (isPL ? audit.aiVerdictPl : audit.aiVerdictEn),
+                                  isShowingBarrier
+                                      ? (audit.isAccessible
+                                          ? (isPL
+                                              ? 'Ominięto tę barierę dzięki alternatywnej trasie KrakAccess.'
+                                              : 'This barrier is avoided via the KrakAccess route.')
+                                          : (isPL ? audit.aiVerdictPl : audit.aiVerdictEn))
+                                      : (isPL
+                                          ? (audit.isAccessible
+                                              ? audit.aiVerdictPl
+                                              : 'KrakAccess skierował Cię bezpiecznym obejściem naziemnym bez barier architektonicznych.')
+                                          : (audit.isAccessible ? audit.aiVerdictEn : 'KrakAccess routed you through a flat, barrier-free path.')),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 11.5,
@@ -514,6 +681,40 @@ class _AuditModalState extends State<AuditModal> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStreetViewImage(String photoPath, bool isBarrier) {
+    if (photoPath.startsWith('assets/')) {
+      return Image.asset(
+        photoPath,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, stack) => _buildFallbackPhoto(isBarrier),
+      );
+    }
+
+    return Image.network(
+      photoPath,
+      fit: BoxFit.cover,
+      loadingBuilder: (ctx, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: const Color(0xFF0F172A),
+          child: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF38BDF8)),
+          ),
+        );
+      },
+      errorBuilder: (ctx, err, stack) => _buildFallbackPhoto(isBarrier),
+    );
+  }
+
+  Widget _buildFallbackPhoto(bool isBarrier) {
+    return Image.asset(
+      isBarrier
+          ? 'assets/streetview/generic_stairs_barrier.jpg'
+          : 'assets/streetview/generic_flat_bypass.jpg',
+      fit: BoxFit.cover,
     );
   }
 

@@ -76,6 +76,96 @@ void main() {
       expect(analysis.barrierNamePl.toLowerCase().contains('floriań'), isFalse);
       expect(analysis.bypassReasonPl.toLowerCase().contains('floriań'), isFalse);
       expect(analysis.highlightsPl.any((h) => h.toLowerCase().contains('floriań')), isFalse);
+      expect(analysis.photoUrl.startsWith('assets/streetview/') || analysis.photoUrl.startsWith('http'), isTrue);
+      expect(analysis.bypassPhotoUrl.startsWith('assets/streetview/'), isTrue);
+    });
+
+    test('Route from Dworzec to AGH shows 0 stairs (not 24 stairs!)', () async {
+      final routes = await RoutingService.calculateDynamicRoute(
+        start: const LatLng(50.0668, 19.9460), // Dworzec Główny
+        end: const LatLng(50.0665, 19.9190),   // AGH
+        profile: MobilityProfile.wheelchair,
+        startName: 'Dworzec Główny PKP',
+        destinationName: 'AGH Kraków',
+      );
+
+      final standard = routes.firstWhere((r) => r.type == RouteType.standard);
+      // Trasa do AGH biegnie przez Basztową / Karmelicką / Czarnowiejską - nie ma tam tunelu Lubicz!
+      expect(standard.stairsCount, 0);
+      expect(standard.detectedBarrierPl?.toLowerCase().contains('lubicz'), isFalse);
+    });
+
+    test('Customized mobility profiles have distinct guidance for wheelchair, cane, and stroller', () async {
+      final wheelchairRes = await AiRouteAnalyst.analyzeRoute(
+        startName: 'Dworzec Główny PKP',
+        destinationName: 'Rynek Główny',
+        start: const LatLng(50.0668, 19.9460),
+        end: const LatLng(50.0617, 19.9373),
+        distanceMeters: 800,
+        profile: MobilityProfile.wheelchair,
+      );
+
+      final caneRes = await AiRouteAnalyst.analyzeRoute(
+        startName: 'Dworzec Główny PKP',
+        destinationName: 'Rynek Główny',
+        start: const LatLng(50.0668, 19.9460),
+        end: const LatLng(50.0617, 19.9373),
+        distanceMeters: 800,
+        profile: MobilityProfile.cane,
+      );
+
+      final strollerRes = await AiRouteAnalyst.analyzeRoute(
+        startName: 'Dworzec Główny PKP',
+        destinationName: 'Rynek Główny',
+        start: const LatLng(50.0668, 19.9460),
+        end: const LatLng(50.0617, 19.9373),
+        distanceMeters: 800,
+        profile: MobilityProfile.stroller,
+      );
+
+      // Wheelchair checks
+      expect(wheelchairRes.aiVerdictPl.toLowerCase().contains('wózk'), isTrue);
+      expect(wheelchairRes.highlightsPl.any((h) => h.contains('0-1 cm') || h.contains('WCAG')), isTrue);
+
+      // Cane checks (resting spots / fall prevention)
+      expect(caneRes.aiVerdictPl.toLowerCase().contains('senior') || caneRes.aiVerdictPl.toLowerCase().contains('upadk') || caneRes.aiVerdictPl.toLowerCase().contains('kuli'), isTrue);
+      expect(caneRes.highlightsPl.any((h) => h.contains('ławek') || h.contains('odpoczynku') || h.contains('antypoślizgow')), isTrue);
+
+      // Stroller checks (child comfort / sleep / carrying)
+      expect(strollerRes.aiVerdictPl.toLowerCase().contains('dzieck') || strollerRes.aiVerdictPl.toLowerCase().contains('rodzic'), isTrue);
+      expect(strollerRes.highlightsPl.any((h) => h.contains('dziecka') || h.contains('wózka dziecięcego')), isTrue);
+    });
+
+    test('Both positive and negative audits contain real streetview photos and bypass photos', () {
+      final presets = [
+        'preset_dworzec_rynek',
+        'preset_wawel_kazimierz',
+        'preset_barbakan_sukiennice',
+      ];
+
+      for (final preset in presets) {
+        final routes = RoutingService.getRoutesForPreset(preset, MobilityProfile.wheelchair);
+        final accessible = routes.firstWhere((r) => r.type == RouteType.accessible);
+        final standard = routes.firstWhere((r) => r.type == RouteType.standard);
+
+        // Positive route audit checks
+        expect(accessible.audits.isNotEmpty, isTrue, reason: '$preset accessible audits must not be empty');
+        for (final audit in accessible.audits) {
+          expect(audit.photoUrl, startsWith('assets/streetview/'));
+          expect(audit.bypassPhotoUrl, isNotNull);
+          expect(audit.bypassPhotoUrl, startsWith('assets/streetview/'));
+          expect(audit.isAccessible, isTrue);
+        }
+
+        // Negative route audit checks
+        expect(standard.audits.isNotEmpty, isTrue, reason: '$preset standard audits must not be empty');
+        for (final audit in standard.audits) {
+          expect(audit.photoUrl, startsWith('assets/streetview/'));
+          expect(audit.bypassPhotoUrl, isNotNull);
+          expect(audit.bypassPhotoUrl, startsWith('assets/streetview/'));
+          expect(audit.isAccessible, isFalse);
+        }
+      }
     });
   });
 }

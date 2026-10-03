@@ -127,6 +127,7 @@ class RoutingService {
       end: end,
       distanceMeters: distance,
       profile: profile,
+      directPoints: directPoints,
     );
 
     return _buildDynamicRoutePair(
@@ -197,12 +198,10 @@ class RoutingService {
     required String destName,
     required AiRouteAnalysisResult analysis,
   }) {
-    final midpoint = directPoints[directPoints.length ~/ 2];
-
     final standardAudit = AccessibilityAudit(
       id: 'aud_dyn_std_${DateTime.now().millisecondsSinceEpoch}',
       checkpointName: analysis.barrierNamePl,
-      location: midpoint,
+      location: analysis.obstacleLocation,
       photoUrl: analysis.photoUrl,
       isAccessible: false,
       score: analysis.standardScore,
@@ -220,6 +219,9 @@ class RoutingService {
       bypassDescriptionEn: analysis.bypassReasonEn,
       profileImpactPl: _getProfileImpactPl(profile, analysis.stairsCount > 0 ? 'schody' : 'krawężnik'),
       profileImpactEn: _getProfileImpactEn(profile, analysis.stairsCount > 0 ? 'stairs' : 'curb'),
+      isLiveGeoPhoto: analysis.isLivePhoto,
+      photoSourceAttribution: analysis.photoAttribution,
+      photoTitle: analysis.photoTitle,
     );
 
     final accessibleAudit = AccessibilityAudit(
@@ -235,17 +237,21 @@ class RoutingService {
       surfaceType: 'Gładkie płyty chodnikowe bezszwowe',
       hazards: const [],
       aiVerdictPl: profile == MobilityProfile.wheelchair
-          ? 'BEZPIECZNE: Płaski trakt pieszy bez schodów, szerokość >2.2 m, 100% zjazdów zlicowanych 0 cm.'
+          ? 'BEZPIECZNE DLA WÓZKA: Płaski trakt pieszy bez schodów, szerokość >2.2 m, 100% zjazdów zlicowanych 0 cm.'
           : (profile == MobilityProfile.cane
-              ? 'BEZPIECZNE: Płaski odcinek z ławkami i łagodnym spadkiem <2.5%.'
-              : 'BEZPIECZNE: Szeroki chodnik dla wózka dziecięcego bez drgań i wstrząsów.'),
+              ? 'BEZPIECZNE DLA SENIORA: Płaski odcinek z ławkami co 120 m i łagodnym spadkiem <2.5%.'
+              : 'BEZPIECZNE DLA WÓZKA DZIECIĘCEGO: Szeroki chodnik bez drgań – ochrona snu dziecka.'),
       aiVerdictEn: 'SAFE: Flat surface, dropped curbs, excellent accessibility.',
-      bypassTitlePl: 'Sprawdzony trakt KrakAccess',
-      bypassTitleEn: 'KrakAccess Verified Path',
+      bypassPhotoUrl: analysis.photoUrl,
+      bypassTitlePl: 'Ominięta bariera na trasie bezpośredniej',
+      bypassTitleEn: 'Bypassed barrier on direct route',
       bypassDescriptionPl: analysis.bypassReasonPl,
       bypassDescriptionEn: analysis.bypassReasonEn,
       profileImpactPl: 'Dostosowane do wybranego profilu mobilności.',
       profileImpactEn: 'Adapted for the selected mobility profile.',
+      isLiveGeoPhoto: false,
+      photoSourceAttribution: 'KrakAccess Verified Bypass',
+      photoTitle: 'Trasa bez barier KrakAccess',
     );
 
     final bypassDistance = distanceMeters + (distanceMeters * 0.08).round() + 50;
@@ -323,7 +329,7 @@ class RoutingService {
         id: 'aud_std_1',
         checkpointName: 'Przejście podziemne Dworzec / Planty (ul. Lubicz)',
         location: const LatLng(50.0652, 19.9442),
-        photoUrl: 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=800&q=80',
+        photoUrl: 'assets/streetview/lubicz_barrier.jpg',
         isAccessible: false,
         score: profile == MobilityProfile.wheelchair ? 20 : (profile == MobilityProfile.cane ? 45 : 30),
         stairsDetected: true,
@@ -337,7 +343,7 @@ class RoutingService {
                 ? 'ZAGROŻENIE DLA SENIORA: Śliskie stopnie i strome zejście – wysokie ryzyko upadku.'
                 : 'UTRUDNIENIE: Konieczność zniesienia wózka dziecięcego ze schodów.'),
         aiVerdictEn: 'CRITICAL BARRIER: 24 steps without functioning elevator.',
-        bypassPhotoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+        bypassPhotoUrl: 'assets/streetview/planty_bypass.jpg',
         bypassTitlePl: 'Obejście KrakAccess (Naziemne Planty)',
         bypassTitleEn: 'KrakAccess Bypass (Ground Crossing)',
         bypassDescriptionPl: 'Skierowano przez przejście naziemne z sygnalizacją dźwiękową i rampą 0cm.',
@@ -349,7 +355,7 @@ class RoutingService {
         id: 'aud_std_2',
         checkpointName: 'Wlot ul. Floriańskiej (Brama Floriańska)',
         location: const LatLng(50.0645, 19.9405),
-        photoUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80',
+        photoUrl: 'assets/streetview/florianska_barrier.jpg',
         isAccessible: false,
         score: profile == MobilityProfile.wheelchair ? 35 : (profile == MobilityProfile.cane ? 60 : 45),
         stairsDetected: false,
@@ -363,7 +369,7 @@ class RoutingService {
                 ? 'Nierówna kostka: Utrudnione oparcie laski, ryzyko skręcenia kostki.'
                 : 'Uciążliwe wstrząsy dla śpiącego dziecka w wózku.'),
         aiVerdictEn: 'Uneven cobblestone causing intense vibrations and trip hazard.',
-        bypassPhotoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+        bypassPhotoUrl: 'assets/streetview/slawkowska_bypass.jpg',
         bypassTitlePl: 'Objazd ul. Szpitalną',
         bypassTitleEn: 'Bypass via Szpitalna St.',
         bypassDescriptionPl: 'Gładkie płyty granitowe po rewitalizacji bez szwów.',
@@ -413,7 +419,7 @@ class RoutingService {
         id: 'aud_acc_1',
         checkpointName: 'Przejście naziemne Planty (ul. Westerplatte / Lubicz)',
         location: const LatLng(50.0648, 19.9451),
-        photoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+        photoUrl: 'assets/streetview/planty_bypass.jpg',
         isAccessible: true,
         score: profile == MobilityProfile.wheelchair ? 98 : (profile == MobilityProfile.cane ? 96 : 97),
         stairsDetected: false,
@@ -427,8 +433,9 @@ class RoutingService {
                 ? 'KOMFORTOWE: Płaski trakt z ławeczkami w cieniu drzew na Plantach, brak stopni.'
                 : 'IDEALNE: Szerokie, równe przejście dla wózka dziecięcego.'),
         aiVerdictEn: 'OPTIMAL: Fully accessible ground crossing, zero steps.',
-        bypassTitlePl: 'Sprawdzony trakt KrakAccess',
-        bypassTitleEn: 'KrakAccess Path',
+        bypassPhotoUrl: 'assets/streetview/lubicz_barrier.jpg',
+        bypassTitlePl: 'Ominięte schody w tunelu Lubicz (24 stopnie)',
+        bypassTitleEn: 'Bypassed 24 steps in Lubicz underpass',
         bypassDescriptionPl: 'Audyt AI potwierdził obecność obniżonych krawężników i brak barier.',
         bypassDescriptionEn: 'AI audit verified dropped curbs and zero obstacles.',
       ),
@@ -436,7 +443,7 @@ class RoutingService {
         id: 'aud_acc_2',
         checkpointName: 'Dojście ul. Szpitalną do Rynku',
         location: const LatLng(50.0628, 19.9388),
-        photoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+        photoUrl: 'assets/streetview/slawkowska_bypass.jpg',
         isAccessible: true,
         score: 98,
         stairsDetected: false,
@@ -446,6 +453,11 @@ class RoutingService {
         hazards: const [],
         aiVerdictPl: 'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
         aiVerdictEn: 'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
+        bypassPhotoUrl: 'assets/streetview/florianska_barrier.jpg',
+        bypassTitlePl: 'Ominięty zabytkowy bruk na Floriańskiej',
+        bypassTitleEn: 'Bypassed cobblestones on Floriańska',
+        bypassDescriptionPl: 'Pomyślnie ominięto kocie łby i wstrząsy.',
+        bypassDescriptionEn: 'Successfully avoided cobblestones and vibrations.',
       ),
     ];
 
@@ -519,7 +531,7 @@ class RoutingService {
           id: 'aud_wawel_std',
           checkpointName: 'Zejście pod Wzgórzem Wawelskim (ul. św. Idziego)',
           location: const LatLng(50.0538, 19.9372),
-          photoUrl: 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=800&q=80',
+          photoUrl: 'assets/streetview/wawel_stairs_barrier.jpg',
           isAccessible: false,
           score: profile == MobilityProfile.wheelchair ? 20 : 35,
           stairsDetected: true,
@@ -529,7 +541,7 @@ class RoutingService {
           hazards: const ['18 stopni', 'Brak pochylni', 'Spadek terenu 11%'],
           aiVerdictPl: 'KRYTYCZNA BARIERA: Schody kamienne o nachyleniu 11% bez pochylni.',
           aiVerdictEn: 'CRITICAL BARRIER: Steep stone steps with 11% gradient.',
-          bypassPhotoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+          bypassPhotoUrl: 'assets/streetview/bernardynska_bypass.jpg',
           bypassTitlePl: 'Płaski zjazd ul. Bernardyńską',
           bypassTitleEn: 'Flat ramp via Bernardyńska St.',
           bypassDescriptionPl: 'Łagodne nachylenie <3.5%, gładki asfalt i bezpieczne barierki.',
@@ -575,7 +587,7 @@ class RoutingService {
           id: 'aud_wawel_acc',
           checkpointName: 'Płaski zjazd ul. Bernardyńska / Dietla',
           location: LatLng(50.0515, 19.9395),
-          photoUrl: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=800&q=80',
+          photoUrl: 'assets/streetview/bernardynska_bypass.jpg',
           isAccessible: true,
           score: 95,
           stairsDetected: false,
@@ -585,6 +597,9 @@ class RoutingService {
           hazards: [],
           aiVerdictPl: 'BEZPIECZNE: Płaski trakt pieszy o nachyleniu 3.2%, w pełni zgodny z normami WCAG.',
           aiVerdictEn: 'SAFE: Flat pedestrian path with 3.2% slope, fully WCAG compliant.',
+          bypassPhotoUrl: 'assets/streetview/wawel_stairs_barrier.jpg',
+          bypassTitlePl: 'Ominięte 18 stopni ze Wzgórza Wawelskiego',
+          bypassTitleEn: 'Bypassed 18 steep steps from Wawel Hill',
         ),
       ],
       profileHighlightsPl: _getWawelHighlightsPl(profile),
@@ -624,7 +639,28 @@ class RoutingService {
       surfaceSummaryPl: 'Gładkie płyty granitowe, zlicowane krawężniki 0-1cm',
       surfaceSummaryEn: 'Smooth granite slabs, flush curbs 0-1cm',
       coordinates: reversed ? accCoords.reversed.toList() : accCoords,
-      audits: const [],
+      audits: [
+        AccessibilityAudit(
+          id: 'aud_barbakan_acc',
+          checkpointName: 'Ulica Sławkowska (Gładkie płyty szlifowane)',
+          location: const LatLng(50.0635, 19.9380),
+          photoUrl: 'assets/streetview/slawkowska_bypass.jpg',
+          isAccessible: true,
+          score: 98,
+          stairsDetected: false,
+          stairsCount: 0,
+          curbStatus: 'Zjazdy zlicowane 0-1 cm',
+          surfaceType: 'Gładkie płyty granitowe bezszwowe',
+          hazards: const [],
+          aiVerdictPl: 'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
+          aiVerdictEn: 'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
+          bypassPhotoUrl: 'assets/streetview/florianska_barrier.jpg',
+          bypassTitlePl: 'Ominięty zabytkowy bruk na Floriańskiej',
+          bypassTitleEn: 'Bypassed Floriańska cobblestones',
+          bypassDescriptionPl: 'Pomyślnie ominięto kocie łby i niebezpieczne wstrząsy.',
+          bypassDescriptionEn: 'Successfully avoided cobblestones and vibrations.',
+        ),
+      ],
       profileHighlightsPl: _getBarbakanHighlightsPl(profile),
       profileHighlightsEn: _getBarbakanHighlightsEn(profile),
       detectedBarrierPl: 'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
@@ -657,7 +693,32 @@ class RoutingService {
       surfaceSummaryPl: 'Zabytkowy nierówny bruk (kocie łby)',
       surfaceSummaryEn: 'Historic uneven cobblestones',
       coordinates: reversed ? stdCoords.reversed.toList() : stdCoords,
-      audits: const [],
+      audits: [
+        AccessibilityAudit(
+          id: 'aud_barbakan_std',
+          checkpointName: 'Wlot ul. Floriańskiej (Brama Floriańska / kocie łby)',
+          location: const LatLng(50.0645, 19.9405),
+          photoUrl: 'assets/streetview/florianska_barrier.jpg',
+          isAccessible: false,
+          score: profile == MobilityProfile.wheelchair ? 35 : (profile == MobilityProfile.cane ? 55 : 45),
+          stairsDetected: false,
+          stairsCount: 0,
+          curbStatus: 'Krawężnik 12-14 cm',
+          surfaceType: 'Zabytkowy nierówny bruk (kocie łby)',
+          hazards: const ['Silne wstrząsy i drgania', 'Głębokie spoiny >3 cm', 'Krawężnik 14 cm'],
+          aiVerdictPl: profile == MobilityProfile.wheelchair
+              ? 'KRYTYCZNE DRGANIA: Historyczny bruk na Floriańskiej grozi wywróceniem wózka. Zalecany objazd ul. Sławkowską.'
+              : 'UTRUDNIENIE: Nierówna nawierzchnia i wysokie uskoki krawężników.',
+          aiVerdictEn: 'SEVERE VIBRATIONS: Historic cobblestones. Use Sławkowska bypass.',
+          bypassPhotoUrl: 'assets/streetview/slawkowska_bypass.jpg',
+          bypassTitlePl: 'Objazd ul. Sławkowską (Gładkie płyty)',
+          bypassTitleEn: 'Bypass via Sławkowska St.',
+          bypassDescriptionPl: 'Gładkie płyty granitowe po rewitalizacji bez szwów.',
+          bypassDescriptionEn: 'Smooth revitalized granite slabs.',
+          profileImpactPl: _getProfileImpactPl(profile, 'krawężnik'),
+          profileImpactEn: _getProfileImpactEn(profile, 'curb'),
+        ),
+      ],
       profileHighlightsPl: const ['Krótsza o 30m', 'Mocne drgania nawierzchni (kocie łby na Floriańskiej)'],
       profileHighlightsEn: const ['30m shorter', 'Severe vibrations (cobblestones on Floriańska)'],
       detectedBarrierPl: 'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
@@ -815,20 +876,20 @@ class RoutingService {
     if (barrierType == 'schody') {
       switch (p) {
         case MobilityProfile.wheelchair:
-          return 'WÓZEK: Całkowicie blokuje przejazd. Wymaga zawrócenia lub asysty 2 osób.';
+          return 'WÓZEK INWALIDZKI: Bariera bezwzględna. Brak rampy i zepsute windy uniemożliwiają przejazd bez asysty co najmniej 2 osób.';
         case MobilityProfile.cane:
-          return 'SENIOR / KULA: Wysokie ryzyko upadku i przeciążenia stawów na schodach.';
+          return 'SENIOR / O KULI: Bardzo wysokie ryzyko upadku. Brak poręczy i strome stopnie przeciążają stawy biodrowe i kolanowe.';
         case MobilityProfile.stroller:
-          return 'WÓZEK DZIECIĘCY: Wymaga wnoszenia ciężkiego wózka po stopniach.';
+          return 'WÓZEK DZIECIĘCY: Wymusza niebezpieczne wnoszenie lub znoszenie ciężkiego wózka (~15-18 kg) z dzieckiem po stopniach.';
       }
     }
     switch (p) {
       case MobilityProfile.wheelchair:
-        return 'WÓZEK: Wysoki krawężnik grozi wywróceniem wózka lub uszkodzeniem kółek.';
+        return 'WÓZEK INWALIDZKI: Krawężnik >10 cm grozi wywrotką wózka do przodu. Kocie łby wywołują bolesne drgania kręgosłupa i blokują kółka skrętne.';
       case MobilityProfile.cane:
-        return 'SENIOR / KULA: Uskok bez rampy wymusza trudny stopień i ryzyko potknięcia.';
+        return 'SENIOR / O KULI: Nierówne spoiny bruku grożą ugrzęźnięciem końcówki kuli. Długi dystans bez ławek spoczynkowych wywołuje zmęczenie.';
       case MobilityProfile.stroller:
-        return 'WÓZEK DZIECIĘCY: Wstrząsy i konieczność podnoszenia przedniej osi wózka.';
+        return 'WÓZEK DZIECIĘCY: Wyboje i kocie łby wybudzają dziecko ze snu mikrowstrząsami. Krawężniki 14 cm wymuszają siłowe szarpanie osią wózka.';
     }
   }
 
@@ -836,13 +897,20 @@ class RoutingService {
     if (barrierType == 'stairs') {
       switch (p) {
         case MobilityProfile.wheelchair:
-          return 'WHEELCHAIR: Completely blocks transit. Requires 2 assistants or rerouting.';
+          return 'WHEELCHAIR: Absolute barrier. Requires 2 assistants or detour via certified ramps.';
         case MobilityProfile.cane:
-          return 'SENIOR: High fall risk and knee stress on steep stairs.';
+          return 'SENIOR / CANE: High fall hazard and acute stress on joints without handrails.';
         case MobilityProfile.stroller:
-          return 'STROLLER: Requires carrying stroller up/down stairs.';
+          return 'STROLLER: Requires lifting and carrying heavy pram (~15-18 kg) upstairs.';
       }
     }
-    return 'Impact depends on mobility profile.';
+    switch (p) {
+      case MobilityProfile.wheelchair:
+        return 'WHEELCHAIR: High curb threatens forward tip; rough cobblestones cause spine vibration.';
+      case MobilityProfile.cane:
+        return 'SENIOR / CANE: Cobblestone gaps catch cane tips; lack of resting benches causes fatigue.';
+      case MobilityProfile.stroller:
+        return 'STROLLER: Cobblestone vibration disturbs infant sleep; 14cm curbs require jerking wheels.';
+    }
   }
 }

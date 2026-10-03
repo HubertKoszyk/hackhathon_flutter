@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import '../models/accessibility_audit.dart';
 
@@ -51,14 +52,19 @@ class VisionAuditService {
       try {
         Uint8List? imageBytes = directImageBytes;
 
-        // Jeśli nie przekazano bezpośrednich bajtów, pobieramy obrazek z URL
+        // Jeśli nie przekazano bezpośrednich bajtów, pobieramy obrazek z zasobów lub URL
         if (imageBytes == null && photoUrl.isNotEmpty) {
           try {
-            final imgResponse = await http.get(Uri.parse(photoUrl)).timeout(
-                  const Duration(seconds: 4),
-                );
-            if (imgResponse.statusCode == 200) {
-              imageBytes = imgResponse.bodyBytes;
+            if (photoUrl.startsWith('assets/')) {
+              final byteData = await rootBundle.load(photoUrl);
+              imageBytes = byteData.buffer.asUint8List();
+            } else if (photoUrl.startsWith('http')) {
+              final imgResponse = await http.get(Uri.parse(photoUrl)).timeout(
+                    const Duration(seconds: 4),
+                  );
+              if (imgResponse.statusCode == 200) {
+                imageBytes = imgResponse.bodyBytes;
+              }
             }
           } catch (_) {
             // Ignoruj błąd pobierania obrazka, model przeanalizuje kontekst tekstowy
