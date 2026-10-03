@@ -151,11 +151,13 @@ class AppState extends ChangeNotifier {
   void setStartLocation(KrakowLocation loc) {
     _startLocation = loc;
     notifyListeners();
+    planRouteBetweenSelectedPoints(showLoader: true);
   }
 
   void setDestinationLocation(KrakowLocation loc) {
     _destinationLocation = loc;
     notifyListeners();
+    planRouteBetweenSelectedPoints(showLoader: true);
   }
 
   void swapLocations() {
@@ -169,13 +171,14 @@ class AppState extends ChangeNotifier {
     _customPin = point;
     _destinationLocation = KrakowLocation(
       id: 'loc_custom_${DateTime.now().millisecondsSinceEpoch}',
-      namePl: 'Punkt wskazany na mapie',
-      nameEn: 'Point chosen on map',
+      namePl: 'Punkt na mapie (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
+      nameEn: 'Map point (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
       address: 'Kraków (współrzędne GPS)',
       point: point,
       category: 'map',
     );
     notifyListeners();
+    planRouteBetweenSelectedPoints(showLoader: true);
   }
 
   void clearCustomPin() {
@@ -237,8 +240,8 @@ class AppState extends ChangeNotifier {
     } else {
       if (showLoader) {
         _analysisStatusText = _language == 'pl'
-            ? 'KrakAccess AI: Kalkulacja płaskiego obejścia...'
-            : 'KrakAccess AI: Calculating accessible bypass...';
+            ? 'KrakAccess AI: Kalkulacja płaskiego obejścia i GTFS...'
+            : 'KrakAccess AI: Calculating accessible bypass & GTFS...';
         notifyListeners();
       }
       _routes = await RoutingService.calculateDynamicRoute(
@@ -254,7 +257,14 @@ class AppState extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    _selectedRouteIndex = 0;
+    // Domyślnie zaznaczamy trasę komunikacji miejskiej GTFS (tramwaj/autobus),
+    // jeśli jest dostępna, aby użytkownik od razu widział opcję tramwajową!
+    final transitIdx = _routes.indexWhere((r) => r.isTransit);
+    if (transitIdx != -1) {
+      _selectedRouteIndex = transitIdx;
+    } else {
+      _selectedRouteIndex = 0;
+    }
     _isAnalyzingRoute = false;
     notifyListeners();
   }

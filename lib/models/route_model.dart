@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'accessibility_audit.dart';
+import 'transit_route_info.dart';
 
 enum RouteType {
   standard,
   accessible,
+  transit,
 }
 
 class RouteModel {
@@ -28,6 +30,7 @@ class RouteModel {
   final String? detectedBarrierEn;
   final String? bypassReasonPl;
   final String? bypassReasonEn;
+  final TransitRouteInfo? transitInfo;
 
   const RouteModel({
     required this.id,
@@ -50,7 +53,10 @@ class RouteModel {
     this.detectedBarrierEn,
     this.bypassReasonPl,
     this.bypassReasonEn,
+    this.transitInfo,
   });
+
+  bool get isTransit => type == RouteType.transit;
 
   String getDistanceString() {
     if (distanceMeters >= 1000) {
@@ -59,3 +65,4 @@ class RouteModel {
     return '$distanceMeters m';
   }
 }
+

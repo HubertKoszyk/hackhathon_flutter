@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/navigation_step.dart';
 import '../models/route_model.dart';
+import '../models/transit_route_info.dart';
 import '../providers/app_state.dart';
 
 class NavigationService {
@@ -25,12 +26,17 @@ class NavigationService {
   }
 
   /// Generuje sekwencję kroków manewrowych krok po kroku (Turn-by-Turn)
-  /// dla dowolnej trasy pieszej w Krakowie z uwzględnieniem wybranego profilu dostępności.
+  /// dla dowolnej trasy pieszej lub komunikacji miejskiej w Krakowie.
   static List<NavigationStep> generateStepsForRoute(
     RouteModel route,
     MobilityProfile profile,
   ) {
+    if (route.isTransit && route.transitInfo != null) {
+      return _generateTransitSteps(route, profile);
+    }
+
     final coords = route.coordinates;
+
     if (coords.length < 2) {
       return [
         NavigationStep(
@@ -244,4 +250,118 @@ class NavigationService {
         return 'Wide park avenue away from traffic and vibrations.';
     }
   }
+
+  /// Generuje kroki nawigacyjne dla przejazdu komunikacją miejską GTFS
+  static List<NavigationStep> _generateTransitSteps(RouteModel route, MobilityProfile profile) {
+    final tInfo = route.transitInfo!;
+    final leg = tInfo.transitLeg;
+    final List<NavigationStep> steps = [];
+    const dist = Distance();
+
+    final isTram = leg.vehicleType == TransitVehicleType.tram;
+    final vehicleName = isTram ? 'Tramwaj' : 'Autobus';
+    final vehicleIcon = isTram ? Icons.tram : Icons.directions_bus;
+
+    // 1. Dojście do przystanku początkowego
+    steps.add(NavigationStep(
+      point: route.coordinates.first,
+      instructionPl: 'Idź na przystanek: ${leg.departureStop.name}',
+      instructionEn: 'Head to transit stop: ${leg.departureStop.name}',
+      streetName: leg.departureStop.name,
+      maneuverIcon: Icons.directions_walk,
+      distanceMeters: tInfo.walkToStopMeters.toDouble(),
+      accessibilityNotePl: 'Dojście bez barier: ${leg.departureStop.platformBadgeTextPl}.',
+      accessibilityNoteEn: 'Accessible access: ${leg.departureStop.platformBadgeTextEn}.',
+    ));
+
+    // 2. Oczekiwanie na peronie
+    steps.add(NavigationStep(
+      point: leg.departureStop.location,
+      instructionPl: 'Peron ${leg.departureStop.code}: Oczekuj na $vehicleName ${leg.lineName} (${leg.headsign})',
+      instructionEn: 'Platform ${leg.departureStop.code}: Wait for ${isTram ? "Tram" : "Bus"} ${leg.lineName} (${leg.headsign})',
+      streetName: leg.departureStop.name,
+      maneuverIcon: vehicleIcon,
+      distanceMeters: 0,
+      accessibilityNotePl: 'Odjazd: ${leg.nextDeparturesFormatted.first}. ${leg.departureStop.platformDescriptionPl}',
+      accessibilityNoteEn: 'Departure: ${leg.nextDeparturesFormatted.first}. ${leg.departureStop.platformDescriptionEn}',
+    ));
+
+    // 3. Wsiadanie do niskopodłogowego pojazdu
+    steps.add(NavigationStep(
+      point: leg.departureStop.location,
+      instructionPl: 'Wsiądź drzwiami z symbolem wózka (wysuwana rampa)',
+      instructionEn: 'Board through doors marked with wheelchair symbol (ramp)',
+      streetName: '$vehicleName ${leg.lineName}',
+      maneuverIcon: Icons.airline_seat_recline_extra,
+      distanceMeters: 20,
+      accessibilityNotePl: '${leg.vehicleName}. Dedykowane stanowisko dla wózków z pasami.',
+      accessibilityNoteEn: '${leg.vehicleName}. Dedicated wheelchair bay with safety straps.',
+    ));
+
+    // 4. Przejazd przez przystanki
+    for (int i = 0; i < leg.intermediateStops.length; i++) {
+      final stop = leg.intermediateStops[i];
+      if (i == 0) continue; // Pomiń początkowy, już jesteśmy w pojeździe
+
+      final isArrival = i == leg.intermediateStops.length - 1;
+      final isPenultimate = i == leg.intermediateStops.length - 2;
+
+      if (isArrival) {
+        // Wysiadanie
+        steps.add(NavigationStep(
+          point: stop.location,
+          instructionPl: 'Wysiądź na przystanku: ${stop.name}',
+          instructionEn: 'Alight at stop: ${stop.name}',
+          streetName: stop.name,
+          maneuverIcon: Icons.transfer_within_a_station,
+          distanceMeters: 0,
+          accessibilityNotePl: 'Wysiadanie na peron: ${stop.platformBadgeTextPl}. 0 schodów.',
+          accessibilityNoteEn: 'Alighting onto platform: ${stop.platformBadgeTextEn}. 0 stairs.',
+        ));
+      } else {
+        // Przystanek na trasie
+        steps.add(NavigationStep(
+          point: stop.location,
+          instructionPl: isPenultimate
+              ? 'Kolejny przystanek: ${leg.arrivalStop.name}. Przygotuj się do wysiadania!'
+              : 'Przystanek na trasie: ${stop.name}',
+          instructionEn: isPenultimate
+              ? 'Next stop: ${leg.arrivalStop.name}. Prepare to alight!'
+              : 'Passing stop: ${stop.name}',
+          streetName: stop.name,
+          maneuverIcon: vehicleIcon,
+          distanceMeters: dist.as(LengthUnit.Meter, stop.location, leg.intermediateStops[i + 1].location).toDouble(),
+          accessibilityNotePl: 'System zapowiedzi głosowych i ekrany LCD informują o przystankach.',
+          accessibilityNoteEn: 'Audio announcements and displays inform about the route.',
+        ));
+      }
+    }
+
+    // 5. Dojście z przystanku docelowego do celu
+    steps.add(NavigationStep(
+      point: leg.arrivalStop.location,
+      instructionPl: 'Kieruj się z przystanku w stronę celu podróży',
+      instructionEn: 'Head from stop towards your destination',
+      streetName: 'Dojście piesze do celu',
+      maneuverIcon: Icons.directions_walk,
+      distanceMeters: tInfo.walkFromStopMeters.toDouble(),
+      accessibilityNotePl: 'Płaski trakt pieszy bez barier architektonicznych.',
+      accessibilityNoteEn: 'Flat footway without architectural barriers.',
+    ));
+
+    // 6. Meta
+    steps.add(NavigationStep(
+      point: route.coordinates.last,
+      instructionPl: 'Dotarłeś do celu podróży!',
+      instructionEn: 'You have arrived at your destination!',
+      streetName: 'Cel podróży',
+      maneuverIcon: Icons.flag,
+      distanceMeters: 0,
+      accessibilityNotePl: 'Trasa GTFS pokonana pomyślnie. Zaoszczędzono ${tInfo.timeSavedMinutes} min!',
+      accessibilityNoteEn: 'GTFS route completed successfully. Saved ${tInfo.timeSavedMinutes} min!',
+    ));
+
+    return steps;
+  }
 }
+

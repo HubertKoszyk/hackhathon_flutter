@@ -2,25 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:hackhathon_flutter/models/route_model.dart';
+import 'package:hackhathon_flutter/models/transit_route_info.dart';
 import 'package:hackhathon_flutter/providers/app_state.dart';
 import 'package:hackhathon_flutter/services/routing_service.dart';
 import 'package:hackhathon_flutter/services/ai_route_analyst.dart';
 import 'package:hackhathon_flutter/services/navigation_service.dart';
+import 'package:hackhathon_flutter/services/gtfs_transit_service.dart';
 
 void main() {
   group('Routing & Statistics Tests', () {
-    test('Dworzec -> Rynek preset has accurate stairs statistics', () {
+    test('Dworzec -> Rynek preset has accurate stairs statistics and GTFS transit option', () {
       final routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', MobilityProfile.wheelchair);
-      expect(routes.length, 2);
+      expect(routes.length, 3);
 
       final accessible = routes.firstWhere((r) => r.type == RouteType.accessible);
+      final transit = routes.firstWhere((r) => r.type == RouteType.transit);
       final standard = routes.firstWhere((r) => r.type == RouteType.standard);
 
       expect(accessible.stairsCount, 0);
       expect(accessible.stairsAvoided, 24);
       expect(standard.stairsCount, 24);
       expect(standard.stairsAvoided, 0);
+
+      // Weryfikacja danych trasy komunikacji miejskiej GTFS
+      expect(transit.transitInfo, isNotNull);
+      expect(transit.stairsCount, 0);
+      expect(transit.transitInfo!.transitLeg.isLowFloor, isTrue);
+      expect(transit.transitInfo!.transitLeg.hasRamp, isTrue);
+      expect(transit.transitInfo!.transitLeg.departureStop.wheelchairBoarding, isTrue);
     });
+
 
     test('Wawel -> Kazimierz preset has 18 stairs and DOES NOT mention Floriańska', () {
       final routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', MobilityProfile.wheelchair);
@@ -212,4 +223,120 @@ void main() {
       expect(state.isNavigating, isFalse);
     });
   });
+
+  group('GTFS Kraków Transit & Platform Accessibility Tests', () {
+    test('GtfsTransitService stop database has authentic Kraków coordinates and platform data', () {
+      expect(GtfsTransitService.krakowStops.isNotEmpty, isTrue);
+
+      final bagatela = GtfsTransitService.krakowStops.firstWhere((s) => s.name.contains('Bagatela'));
+      expect(bagatela.platformType, PlatformType.vienna);
+      expect(bagatela.platformBadgeTextPl.contains('Wiedeński'), isTrue);
+      expect(bagatela.wheelchairBoarding, isTrue);
+
+      final mogilskie = GtfsTransitService.krakowStops.firstWhere((s) => s.name == 'Rondo Mogilskie');
+      expect(mogilskie.platformType, PlatformType.elevatorHub);
+      expect(mogilskie.platformBadgeTextPl.contains('windami'), isTrue);
+    });
+
+    test('GTFS transit routes calculate dynamic departures and speed comparison', () {
+      final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
+        start: const LatLng(50.0668, 19.9460), // Dworzec Główny
+        end: const LatLng(50.0629, 19.9033), // Cichy Kącik
+        profile: MobilityProfile.wheelchair,
+        walkingDistanceMeters: 3400,
+        walkingDurationMinutes: 48,
+        startName: 'Dworzec Główny',
+        destinationName: 'Cichy Kącik',
+      );
+
+      expect(transitRoute, isNotNull);
+      expect(transitRoute!.type, RouteType.transit);
+      expect(transitRoute.transitInfo, isNotNull);
+
+      final tInfo = transitRoute.transitInfo!;
+      expect(tInfo.transitLeg.isLowFloor, isTrue);
+      expect(tInfo.transitLeg.hasRamp, isTrue);
+      expect(tInfo.totalDurationMinutes, lessThan(48)); // Transit is much faster than 48 min walk
+      expect(tInfo.isFastest, isTrue);
+      expect(tInfo.timeSavedMinutes, greaterThan(0));
+      expect(tInfo.transitLeg.nextDeparturesFormatted.isNotEmpty, isTrue);
+    });
+
+    test('Live navigation generates accessible transit instructions for disabled passengers', () {
+      final routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', MobilityProfile.wheelchair);
+      final transitRoute = routes.firstWhere((r) => r.type == RouteType.transit);
+
+      final steps = NavigationService.generateStepsForRoute(transitRoute, MobilityProfile.wheelchair);
+      expect(steps.length, greaterThanOrEqualTo(4));
+
+      // First step: Walk to stop
+      expect(steps[0].instructionPl.contains('przystanek'), isTrue);
+      expect(steps[0].accessibilityNotePl, isNotNull);
+
+      // Second step: Platform wait
+      expect(steps[1].instructionPl.contains('Peron') || steps[1].instructionPl.contains('Oczekuj'), isTrue);
+
+      // Third step: Boarding low-floor vehicle with ramp
+      expect(steps[2].instructionPl.contains('wózka') || steps[2].instructionPl.contains('Wsiądź'), isTrue);
+
+      // Final step: Destination reached
+      expect(steps.last.instructionPl.contains('celu'), isTrue);
+      expect(steps.last.accessibilityNotePl?.contains('0'), isTrue);
+    });
+
+    test('Tapping map (setCustomPin) automatically plans route and selects transit option', () async {
+      final state = AppState();
+      // Initially, preset routes are loaded
+      expect(state.routes.isNotEmpty, isTrue);
+
+      // User clicks anywhere on the map, e.g. near Błonia / AGH
+      final targetPoint = const LatLng(50.0610, 19.9150);
+      state.setCustomPin(targetPoint);
+
+      // Waiting for asynchronous route calculation to finish
+      await Future.delayed(const Duration(milliseconds: 50));
+      while (state.isAnalyzingRoute) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+
+      expect(state.customPin, equals(targetPoint));
+      expect(state.routes.isNotEmpty, isTrue);
+
+      // The selected route should be the GTFS transit option
+      final activeRoute = state.currentRoute;
+      expect(activeRoute, isNotNull);
+      expect(activeRoute!.isTransit, isTrue);
+      expect(activeRoute.transitInfo, isNotNull);
+      expect(activeRoute.transitInfo!.transitLeg.isLowFloor, isTrue);
+    });
+
+    test('GTFS transit routing reliably connects arbitrary coordinates across Kraków', () {
+      final testCases = [
+        // Dworzec -> Błonia / AGH
+        const [LatLng(50.0668, 19.9464), LatLng(50.0610, 19.9150)],
+        // Kazimierz -> Krowodrza Górka
+        const [LatLng(50.0480, 19.9430), LatLng(50.0880, 19.9320)],
+        // Podgórze -> Centrum
+        const [LatLng(50.0460, 19.9540), LatLng(50.0630, 19.9320)],
+        // Nowy Kleparz -> Wawel
+        const [LatLng(50.0735, 19.9360), LatLng(50.0545, 19.9354)],
+      ];
+
+      for (final pair in testCases) {
+        final transit = GtfsTransitService.calculateFastestTransitRoute(
+          start: pair[0],
+          end: pair[1],
+          profile: MobilityProfile.wheelchair,
+          walkingDistanceMeters: 2500,
+          walkingDurationMinutes: 35,
+        );
+
+        expect(transit, isNotNull);
+        expect(transit!.isTransit, isTrue);
+        expect(transit.transitInfo!.transitLeg.lineName.isNotEmpty, isTrue);
+        expect(transit.transitInfo!.transitLeg.departureStop.wheelchairBoarding, isTrue);
+      }
+    });
+  });
 }
+

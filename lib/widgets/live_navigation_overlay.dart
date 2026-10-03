@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/transit_route_info.dart';
 import '../providers/app_state.dart';
 
 class LiveNavigationOverlay extends StatelessWidget {
@@ -11,6 +12,8 @@ class LiveNavigationOverlay extends StatelessWidget {
     final isPL = state.language == 'pl';
     final currentStep = state.currentStep;
     final nextStep = state.nextStep;
+    final isTransit = state.currentRoute?.isTransit == true;
+    final transitInfo = state.currentRoute?.transitInfo;
 
     return Stack(
       children: [
@@ -26,22 +29,26 @@ class LiveNavigationOverlay extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Główny zielony kafelek manewru Google Maps
+                  // Główny kafelek manewru (Google Maps / MPK GTFS style)
                   Container(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF064E3B), Color(0xFF047857)],
+                      gradient: LinearGradient(
+                        colors: isTransit
+                            ? const [Color(0xFF0369A1), Color(0xFF0284C7)]
+                            : const [Color(0xFF064E3B), Color(0xFF047857)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFF34D399).withValues(alpha: 0.6),
+                        color: isTransit
+                            ? const Color(0xFF38BDF8).withValues(alpha: 0.8)
+                            : const Color(0xFF34D399).withValues(alpha: 0.6),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF064E3B).withValues(alpha: 0.5),
+                          color: (isTransit ? const Color(0xFF0284C7) : const Color(0xFF064E3B)).withValues(alpha: 0.5),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -54,20 +61,46 @@ class LiveNavigationOverlay extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Ikona najbliższego manewru
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: Icon(
-                                currentStep?.maneuverIcon ?? Icons.navigation,
-                                color: Colors.white,
-                                size: 32,
-                              ),
+                            // Ikona najbliższego manewru z opcjonalnym badge linii MPK
+                            Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.white24),
+                                  ),
+                                  child: Icon(
+                                    currentStep?.maneuverIcon ?? (isTransit ? Icons.tram : Icons.navigation),
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                ),
+                                if (isTransit && transitInfo != null)
+                                  Positioned(
+                                    bottom: -5,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0F172A),
+                                        borderRadius: BorderRadius.circular(5),
+                                        border: Border.all(color: const Color(0xFF38BDF8), width: 1),
+                                      ),
+                                      child: Text(
+                                        transitInfo.transitLeg.lineName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(width: 14),
 
@@ -402,27 +435,29 @@ class LiveNavigationOverlay extends StatelessWidget {
 
                         const Spacer(),
 
-                        // Wskaźnik prędkości marszu / tempa
+                        // Wskaźnik prędkości marszu / trybu podróży (Pieszo vs GTFS)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: isTransit ? const Color(0xFF38BDF8).withValues(alpha: 0.4) : Colors.white12),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                '${state.currentWalkingSpeedKmh.toStringAsFixed(1)} km/h',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
+                                isTransit && transitInfo != null
+                                    ? '${transitInfo.transitLeg.vehicleType == TransitVehicleType.tram ? "Tram" : "Bus"} ${transitInfo.transitLeg.lineName}'
+                                    : '${state.currentWalkingSpeedKmh.toStringAsFixed(1)} km/h',
+                                style: TextStyle(
+                                  color: isTransit ? const Color(0xFF38BDF8) : Colors.white,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                isPL ? 'Prędkość' : 'Speed',
+                                isTransit ? 'GTFS Live' : (isPL ? 'Prędkość' : 'Speed'),
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 9.5,

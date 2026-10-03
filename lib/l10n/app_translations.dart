@@ -35,6 +35,11 @@ class AppTranslations {
       'steps_avoided': 'ominiętych stopni',
       'smoothness': 'Gładkość nawierzchni',
       'language': 'Język',
+      'route_transit': 'Komunikacja GTFS',
+      'fastest_route': 'Najszybsza',
+      'next_departure': 'Odjazd za',
+      'platform_accessible': 'Peron bez barier',
+      'vehicle_low_floor': '100% niskopodłogowy z rampą',
     },
     'en': {
       'app_title': 'KrakAccess',
@@ -71,6 +76,11 @@ class AppTranslations {
       'steps_avoided': 'steps avoided',
       'smoothness': 'Surface smoothness',
       'language': 'Language',
+      'route_transit': 'GTFS Transit',
+      'fastest_route': 'Fastest',
+      'next_departure': 'Departure in',
+      'platform_accessible': 'Accessible platform',
+      'vehicle_low_floor': '100% low-floor with ramp',
     },
   };
 

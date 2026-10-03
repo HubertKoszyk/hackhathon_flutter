@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../models/transit_route_info.dart';
 import '../providers/app_state.dart';
 
 class KrakMapView extends StatefulWidget {
@@ -53,19 +54,38 @@ class _KrakMapViewState extends State<KrakMapView> {
 
         // Warstwa tras (Polylines)
         PolylineLayer(
-          polylines: state.routes.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final route = entry.value;
-            final isSelected = idx == state.selectedRouteIndex;
-
-            return Polyline(
-              points: route.coordinates,
-              strokeWidth: isSelected ? 6.5 : 3.5,
-              color: isSelected
-                  ? route.polylineColor
-                  : route.polylineColor.withValues(alpha: 0.35),
-            );
-          }).toList(),
+          polylines: [
+            for (final entry in state.routes.asMap().entries) ...[
+              if (entry.value.isTransit && entry.value.transitInfo != null && entry.key == state.selectedRouteIndex) ...[
+                // Dojście piesze do przystanku początkowego (Zielona linia)
+                Polyline(
+                  points: entry.value.transitInfo!.walkToStopPolyline,
+                  strokeWidth: 4.5,
+                  color: const Color(0xFF10B981),
+                ),
+                // Przejazd tramwajem / autobusem (Błękit MPK Kraków)
+                Polyline(
+                  points: entry.value.transitInfo!.transitLeg.trackGeometry,
+                  strokeWidth: 7.0,
+                  color: const Color(0xFF0284C7),
+                ),
+                // Dojście piesze z przystanku docelowego (Zielona linia)
+                Polyline(
+                  points: entry.value.transitInfo!.walkFromStopPolyline,
+                  strokeWidth: 4.5,
+                  color: const Color(0xFF10B981),
+                ),
+              ] else ...[
+                Polyline(
+                  points: entry.value.coordinates,
+                  strokeWidth: entry.key == state.selectedRouteIndex ? 6.5 : 3.5,
+                  color: entry.key == state.selectedRouteIndex
+                      ? entry.value.polylineColor
+                      : entry.value.polylineColor.withValues(alpha: 0.35),
+                ),
+              ],
+            ],
+          ],
         ),
 
         // Warstwa markerów
@@ -236,6 +256,116 @@ class _KrakMapViewState extends State<KrakMapView> {
                   ],
                 ),
               ),
+
+            // 2.7 Przystanki komunikacji miejskiej GTFS (dla aktywnej trasy tranzytowej)
+            if (activeRoute != null && activeRoute.isTransit && activeRoute.transitInfo != null) ...[
+              // Przystanek początkowy (Wsiadanie)
+              Marker(
+                point: activeRoute.transitInfo!.transitLeg.departureStop.location,
+                width: 140,
+                height: 48,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF38BDF8), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            activeRoute.transitInfo!.transitLeg.vehicleType == TransitVehicleType.tram
+                                ? Icons.tram
+                                : Icons.directions_bus,
+                            size: 11,
+                            color: const Color(0xFF38BDF8),
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              '${activeRoute.transitInfo!.transitLeg.lineName} • ${activeRoute.transitInfo!.transitLeg.departureStop.name}',
+                              style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(Icons.departure_board, color: Colors.white, size: 10),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Przystanek docelowy (Wysiadanie)
+              Marker(
+                point: activeRoute.transitInfo!.transitLeg.arrivalStop.location,
+                width: 140,
+                height: 48,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF10B981), width: 1),
+                      ),
+                      child: Text(
+                        'Wysiadka: ${activeRoute.transitInfo!.transitLeg.arrivalStop.name}',
+                        style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(Icons.transfer_within_a_station, color: Colors.white, size: 10),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Przystanki pośrednie na trasie
+              if (activeRoute.transitInfo!.transitLeg.intermediateStops.length > 2)
+                for (final stop in activeRoute.transitInfo!.transitLeg.intermediateStops
+                    .sublist(1, activeRoute.transitInfo!.transitLeg.intermediateStops.length - 1))
+                  Marker(
+                    point: stop.location,
+                    width: 12,
+                    height: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF38BDF8),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
 
             // 3. Punkty kontrolne / Przeszkody AI Street View
             if (activeRoute != null)

@@ -7,6 +7,7 @@ import '../models/accessibility_audit.dart';
 import '../models/route_model.dart';
 import '../providers/app_state.dart';
 import 'ai_route_analyst.dart';
+import 'gtfs_transit_service.dart';
 
 class RoutePreset {
   final String id;
@@ -319,6 +320,20 @@ class RoutingService {
       bypassReasonEn: analysis.bypassReasonEn,
     );
 
+    // Kalkulacja najszybszej dostępnej trasy komunikacji miejskiej GTFS (tramwaj/autobus)
+    final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
+      start: start,
+      end: end,
+      profile: profile,
+      walkingDistanceMeters: distanceMeters,
+      walkingDurationMinutes: bypassDuration,
+      startName: startName,
+      destinationName: destName,
+    );
+
+    if (transitRoute != null) {
+      return [accessibleRoute, transitRoute, standardRoute];
+    }
     return [accessibleRoute, standardRoute];
   }
 
@@ -497,6 +512,20 @@ class RoutingService {
       bypassReasonEn: 'Bypassed stairs via flat Planty crossing (+70 m, 0 stairs)',
     );
 
+    // GTFS Komunikacja Miejska dla trasy Dworzec - Rynek (Linie 18, 4, 14, 20)
+    final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
+      start: reversed ? const LatLng(50.0617, 19.9373) : const LatLng(50.0668, 19.9460),
+      end: reversed ? const LatLng(50.0668, 19.9460) : const LatLng(50.0617, 19.9373),
+      profile: profile,
+      walkingDistanceMeters: 920,
+      walkingDurationMinutes: 13,
+      startName: reversed ? 'Rynek Główny' : 'Dworzec Główny',
+      destinationName: reversed ? 'Dworzec Główny' : 'Rynek Główny',
+    );
+
+    if (transitRoute != null) {
+      return [accessibleRoute, transitRoute, standardRoute];
+    }
     return [accessibleRoute, standardRoute];
   }
 
@@ -610,6 +639,20 @@ class RoutingService {
       bypassReasonEn: 'Rerouted through gentle Bernardyńska slope (+150m, 0 stairs)',
     );
 
+    // GTFS Komunikacja Miejska dla trasy Wawel - Kazimierz (Linie 8, 18)
+    final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
+      start: reversed ? const LatLng(50.0519, 19.9452) : const LatLng(50.0545, 19.9354),
+      end: reversed ? const LatLng(50.0545, 19.9354) : const LatLng(50.0519, 19.9452),
+      profile: profile,
+      walkingDistanceMeters: 1250,
+      walkingDurationMinutes: 17,
+      startName: reversed ? 'Kazimierz (Plac Wolnica)' : 'Wawel (Zamek)',
+      destinationName: reversed ? 'Wawel (Zamek)' : 'Kazimierz (Plac Wolnica)',
+    );
+
+    if (transitRoute != null) {
+      return [accessibleRoute, transitRoute, standardRoute];
+    }
     return [accessibleRoute, standardRoute];
   }
 
@@ -727,6 +770,20 @@ class RoutingService {
       bypassReasonEn: 'Bypass recommended via Sławkowska St.',
     );
 
+    // GTFS Komunikacja Miejska dla trasy Barbakan - Sukiennice (Linie 4, 14, 20)
+    final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
+      start: reversed ? const LatLng(50.0617, 19.9373) : const LatLng(50.0656, 19.9416),
+      end: reversed ? const LatLng(50.0656, 19.9416) : const LatLng(50.0617, 19.9373),
+      profile: profile,
+      walkingDistanceMeters: 450,
+      walkingDurationMinutes: 6,
+      startName: reversed ? 'Sukiennice' : 'Barbakan',
+      destinationName: reversed ? 'Barbakan' : 'Sukiennice',
+    );
+
+    if (transitRoute != null) {
+      return [accessibleRoute, transitRoute, standardRoute];
+    }
     return [accessibleRoute, standardRoute];
   }
 
