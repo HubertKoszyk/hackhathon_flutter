@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/route_model.dart';
 import '../providers/app_state.dart';
-import '../services/routing_service.dart';
+import 'route_search_sheet.dart';
 
 class RouteCard extends StatelessWidget {
   const RouteCard({super.key});
+
+  void _openSearchSheet(BuildContext context, LocationPickMode mode) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => RouteSearchSheet(pickMode: mode),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,30 +22,64 @@ class RouteCard extends StatelessWidget {
     final activeRoute = state.currentRoute;
     final isPL = state.language == 'pl';
 
-    if (state.isLoadingDynamicRoute) {
+    // 1. Widok analizy i "myślenia" systemu AI
+    if (state.isAnalyzingRoute) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(color: Color(0xFF38BDF8), strokeWidth: 2.5),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10B981).withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                isPL
-                    ? 'KrakAccess AI: Wyznaczanie trasy bez barier z OSRM...'
-                    : 'KrakAccess AI: Calculating accessible route with OSRM...',
-                style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
-              ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF10B981),
+                    strokeWidth: 2.5,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isPL ? 'KrakAccess AI w toku...' : 'KrakAccess AI analyzing...',
+                        style: const TextStyle(
+                          color: Color(0xFF34D399),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        state.analysisStatusText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -46,7 +89,7 @@ class RouteCard extends StatelessWidget {
     if (activeRoute == null) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.97), // Slate 900
         borderRadius: BorderRadius.circular(22),
@@ -62,59 +105,126 @@ class RouteCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Selector presetów lub informacja o trasie z mapy
+          // 1. Elegancki selektor punktu A i B (Skąd ➔ Dokąd)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+            padding: const EdgeInsets.fromLTRB(14, 10, 12, 6),
             child: Row(
               children: [
-                const Icon(Icons.explore, color: Color(0xFF38BDF8), size: 16),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: state.customPin != null
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                isPL ? 'Dynamiczna trasa do wybranego punktu' : 'Dynamic route to chosen pin',
-                                style: const TextStyle(
-                                  color: Color(0xFFF59E0B),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            InkWell(
-                              onTap: state.clearCustomPin,
-                              child: const Icon(Icons.close, color: Colors.white60, size: 16),
-                            ),
-                          ],
-                        )
-                      : DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: state.selectedPresetId,
-                            dropdownColor: const Color(0xFF1E293B),
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 18),
-                            items: RoutingService.presets.map((preset) {
-                              return DropdownMenuItem<String>(
-                                value: preset.id,
+                  child: Column(
+                    children: [
+                      // Punkt startowy (A)
+                      InkWell(
+                        onTap: () => _openSearchSheet(context, LocationPickMode.start),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.trip_origin, color: Color(0xFF10B981), size: 14),
+                              const SizedBox(width: 8),
+                              Expanded(
                                 child: Text(
-                                  isPL ? preset.titlePl : preset.titleEn,
+                                  isPL ? state.startLocation.namePl : state.startLocation.nameEn,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (newId) {
-                              if (newId != null) state.selectPreset(newId);
-                            },
+                              ),
+                              if (state.isLocatingUser)
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF38BDF8)),
+                                )
+                              else
+                                InkWell(
+                                  onTap: state.useCurrentLocationAsStart,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.my_location, color: Color(0xFF38BDF8), size: 11),
+                                        SizedBox(width: 3),
+                                        Text(
+                                          'GPS',
+                                          style: TextStyle(
+                                            color: Color(0xFF38BDF8),
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.search, color: Colors.white38, size: 14),
+                            ],
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Punkt docelowy (B)
+                      InkWell(
+                        onTap: () => _openSearchSheet(context, LocationPickMode.destination),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_on, color: Color(0xFFEF4444), size: 14),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  isPL ? state.destinationLocation.namePl : state.destinationLocation.nameEn,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.search, color: Colors.white38, size: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Przycisk zamiany Start/Koniec (Swap)
+                InkWell(
+                  onTap: state.swapLocations,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.swap_vert, color: Color(0xFF38BDF8), size: 20),
+                  ),
                 ),
               ],
             ),
@@ -122,9 +232,9 @@ class RouteCard extends StatelessWidget {
 
           const Divider(color: Colors.white12, height: 1),
 
-          // 2. Zakładki tras: Dostępna (Zielona) vs Standardowa (Czerwona)
+          // 2. Zakładki tras: Dostępna (Zielona) vs Standardowa (Czerwona) - MAJĄ RÓŻNE WSPÓŁRZĘDNE!
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: state.routes.asMap().entries.map((entry) {
                 final idx = entry.key;
@@ -138,7 +248,7 @@ class RouteCard extends StatelessWidget {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       margin: EdgeInsets.only(right: idx == 0 ? 6 : 0),
-                      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? (isAccessible
@@ -182,7 +292,7 @@ class RouteCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
                           Text(
                             '${route.accessibilityScore}% ${state.tr('route_score')}',
                             style: TextStyle(
@@ -202,12 +312,12 @@ class RouteCard extends StatelessWidget {
             ),
           ),
 
-          // 3. Informacja o wykrytej barierze i ominięciu przez AI (The "WOW" Street View prompt)
+          // 3. Pasek ostrzeżenia o przeszkodzie z przyciskiem do zdjęcia
           if (activeRoute.detectedBarrierPl != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E293B),
                   borderRadius: BorderRadius.circular(10),
@@ -243,10 +353,11 @@ class RouteCard extends StatelessWidget {
                       InkWell(
                         onTap: () => state.openAudit(activeRoute.audits.first),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFFEF4444).withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFF87171)),
                           ),
                           child: Text(
                             isPL ? 'Zdjęcie 📸' : 'Photo 📸',
@@ -259,17 +370,17 @@ class RouteCard extends StatelessWidget {
               ),
             ),
 
-          // 4. Cechy dostosowane pod wybrany profil (Wózek, Senior, Wózek dziecięcy)
+          // 4. Cechy pod wybrany profil mobilności (Wózek, Senior, Wózek dziecięcy)
           if (activeRoute.profileHighlightsPl.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: (isPL ? activeRoute.profileHighlightsPl : activeRoute.profileHighlightsEn).map((badge) {
                     return Container(
                       margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                       decoration: BoxDecoration(
                         color: activeRoute.type == RouteType.accessible
                             ? const Color(0xFF10B981).withValues(alpha: 0.15)
@@ -297,9 +408,9 @@ class RouteCard extends StatelessWidget {
               ),
             ),
 
-          // 5. Metryki trasy (czas, schody, gładkość)
+          // 5. Metryki trasy (czas, schody, wskaźnik)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -329,10 +440,10 @@ class RouteCard extends StatelessWidget {
             ),
           ),
 
-          // 6. Przycisk Audytu AI Street View
+          // 6. Przycisk Audytu Street View
           if (activeRoute.audits.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+              padding: const EdgeInsets.fromLTRB(12, 3, 12, 8),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -340,13 +451,13 @@ class RouteCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0284C7),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  icon: const Icon(Icons.streetview, size: 17),
+                  icon: const Icon(Icons.streetview, size: 16),
                   label: Text(
                     isPL
                         ? 'Audyt Street View AI (${activeRoute.audits.length} punkty ze zdjęciem)'
@@ -369,7 +480,7 @@ class RouteCard extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: highlightColor ?? Colors.white70),
+        Icon(icon, size: 15, color: highlightColor ?? Colors.white70),
         const SizedBox(width: 5),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,7 +489,7 @@ class RouteCard extends StatelessWidget {
               value,
               style: TextStyle(
                 color: highlightColor ?? Colors.white,
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -386,7 +497,7 @@ class RouteCard extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Colors.white60,
-                fontSize: 9.5,
+                fontSize: 9,
               ),
             ),
           ],

@@ -64,6 +64,27 @@ class MainScreen extends StatelessWidget {
             child: TopBar(),
           ),
 
+          // 2.5 Pływający przycisk mojej lokalizacji GPS
+          Positioned(
+            right: 16,
+            bottom: state.selectedParking != null ? 280 : 375,
+            child: FloatingActionButton.small(
+              heroTag: 'my_gps_btn',
+              backgroundColor: const Color(0xFF1E293B),
+              foregroundColor: const Color(0xFF38BDF8),
+              tooltip: 'Moja lokalizacja GPS',
+              elevation: 4,
+              onPressed: state.useCurrentLocationAsStart,
+              child: state.isLocatingUser
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF38BDF8)),
+                    )
+                  : const Icon(Icons.my_location),
+            ),
+          ),
+
           // 3. Pływający przycisk zgłaszania przeszkód ("Crowdsourced AI")
           Positioned(
             right: 16,

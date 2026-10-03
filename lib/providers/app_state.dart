@@ -5,6 +5,8 @@ import '../models/accessibility_audit.dart';
 import '../models/parking_spot.dart';
 import '../models/route_model.dart';
 import '../services/krakow_data_service.dart';
+import '../services/krakow_locations.dart';
+import '../services/location_service.dart';
 import '../services/routing_service.dart';
 
 enum MobilityProfile { wheelchair, cane, stroller }
@@ -18,7 +20,16 @@ class AppState extends ChangeNotifier {
   ParkingSpot? _selectedParking;
   AccessibilityAudit? _activeAudit;
   LatLng? _customPin;
-  bool _isLoadingDynamicRoute = false;
+
+  // GPS i bieżąca lokalizacja
+  bool _isLocatingUser = false;
+  LatLng? _userCurrentGpsPoint;
+
+  // Wyszukiwanie punktu A i B
+  KrakowLocation _startLocation = KrakowLocationsDatabase.locations[0]; // Dworzec Główny
+  KrakowLocation _destinationLocation = KrakowLocationsDatabase.locations[1]; // Sukiennice
+  bool _isAnalyzingRoute = false;
+  String _analysisStatusText = '';
 
   late List<ParkingSpot> _parkingSpots;
   late List<RouteModel> _routes;
@@ -37,7 +48,12 @@ class AppState extends ChangeNotifier {
   ParkingSpot? get selectedParking => _selectedParking;
   AccessibilityAudit? get activeAudit => _activeAudit;
   LatLng? get customPin => _customPin;
-  bool get isLoadingDynamicRoute => _isLoadingDynamicRoute;
+  bool get isLocatingUser => _isLocatingUser;
+  LatLng? get userCurrentGpsPoint => _userCurrentGpsPoint;
+  KrakowLocation get startLocation => _startLocation;
+  KrakowLocation get destinationLocation => _destinationLocation;
+  bool get isAnalyzingRoute => _isAnalyzingRoute;
+  String get analysisStatusText => _analysisStatusText;
 
   List<ParkingSpot> get parkingSpots => _parkingSpots;
   List<RouteModel> get routes => _routes;
@@ -62,26 +78,13 @@ class AppState extends ChangeNotifier {
     if (_profile != newProfile) {
       _profile = newProfile;
       // Natychmiast przelicz trasy, wskaźniki i bariery pod nowy profil!
-      if (_customPin != null) {
-        routeToCustomPoint(_customPin!);
-      } else {
-        _routes = RoutingService.getRoutesForPreset(_selectedPresetId, _profile);
-      }
+      planRouteBetweenSelectedPoints(showLoader: false);
       notifyListeners();
     }
   }
 
   void toggleParkingLayer() {
     _showParkingLayer = !_showParkingLayer;
-    notifyListeners();
-  }
-
-  void selectPreset(String presetId) {
-    _selectedPresetId = presetId;
-    _customPin = null;
-    _routes = RoutingService.getRoutesForPreset(presetId, _profile);
-    _selectedRouteIndex = 0;
-    _selectedParking = null;
     notifyListeners();
   }
 
@@ -97,9 +100,33 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setStartLocation(KrakowLocation loc) {
+    _startLocation = loc;
+    notifyListeners();
+  }
+
+  void setDestinationLocation(KrakowLocation loc) {
+    _destinationLocation = loc;
+    notifyListeners();
+  }
+
+  void swapLocations() {
+    final temp = _startLocation;
+    _startLocation = _destinationLocation;
+    _destinationLocation = temp;
+    planRouteBetweenSelectedPoints(showLoader: true);
+  }
+
   void setCustomPin(LatLng point) {
     _customPin = point;
-    _selectedParking = null;
+    _destinationLocation = KrakowLocation(
+      id: 'loc_custom_${DateTime.now().millisecondsSinceEpoch}',
+      namePl: 'Punkt wskazany na mapie',
+      nameEn: 'Point chosen on map',
+      address: 'Kraków (współrzędne GPS)',
+      point: point,
+      category: 'map',
+    );
     notifyListeners();
   }
 
@@ -108,26 +135,80 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> routeToCustomPoint(LatLng destination, [String? targetName]) async {
-    _isLoadingDynamicRoute = true;
-    _customPin = destination;
+  /// Pobiera pozycję GPS i ustawia ją jako punkt startowy
+  Future<void> useCurrentLocationAsStart() async {
+    _isLocatingUser = true;
+    notifyListeners();
+
+    final userLoc = await LocationService.getCurrentUserLocation();
+    if (userLoc != null) {
+      _startLocation = userLoc;
+      _userCurrentGpsPoint = userLoc.point;
+      _isLocatingUser = false;
+      notifyListeners();
+      await planRouteBetweenSelectedPoints(showLoader: true);
+    } else {
+      _isLocatingUser = false;
+      notifyListeners();
+    }
+  }
+
+  /// Główna metoda kalkulacji trasy z symulacją myślenia AI i wykrywania przeszkód
+  Future<void> planRouteBetweenSelectedPoints({bool showLoader = true}) async {
     _selectedParking = null;
-    notifyListeners();
 
-    // Start z aktualnej lokalizacji / Dworca Głównego w Krakowie
-    const startPoint = LatLng(50.0668, 19.9464);
+    if (showLoader) {
+      _isAnalyzingRoute = true;
+      _analysisStatusText = _language == 'pl'
+          ? 'Pobieranie geometrii pieszej Krakowa...'
+          : 'Fetching pedestrian geometry...';
+      notifyListeners();
 
-    final dynamicRoutes = await RoutingService.calculateDynamicRoute(
-      start: startPoint,
-      end: destination,
-      profile: _profile,
-      destinationName: targetName ?? 'Wybrany punkt w Krakowie',
-    );
+      await Future.delayed(const Duration(milliseconds: 400));
+      _analysisStatusText = _language == 'pl'
+          ? 'Skanowanie schodów i krawężników dla profilu ${_getProfileName()}...'
+          : 'Scanning stairs and curbs for ${_getProfileName()}...';
+      notifyListeners();
 
-    _routes = dynamicRoutes;
+      await Future.delayed(const Duration(milliseconds: 500));
+      _analysisStatusText = _language == 'pl'
+          ? 'Kalkulacja bezpiecznego obejścia KrakAccess...'
+          : 'Calculating accessible KrakAccess bypass...';
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 350));
+    }
+
+    // Sprawdź czy to jeden ze znanych presetów, aby zachować najwyższą precyzję, lub wylicz dynamicznie OSRM
+    if (_startLocation.id == 'loc_dworzec' && _destinationLocation.id == 'loc_sukiennice') {
+      _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile);
+    } else if (_startLocation.id == 'loc_wawel' && _destinationLocation.id == 'loc_kazimierz') {
+      _routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', _profile);
+    } else if (_startLocation.id == 'loc_barbakan' && _destinationLocation.id == 'loc_sukiennice') {
+      _routes = RoutingService.getRoutesForPreset('preset_barbakan_sukiennice', _profile);
+    } else {
+      _routes = await RoutingService.calculateDynamicRoute(
+        start: _startLocation.point,
+        end: _destinationLocation.point,
+        profile: _profile,
+        startName: _startLocation.namePl,
+        destinationName: _destinationLocation.namePl,
+      );
+    }
+
     _selectedRouteIndex = 0;
-    _isLoadingDynamicRoute = false;
+    _isAnalyzingRoute = false;
     notifyListeners();
+  }
+
+  String _getProfileName() {
+    switch (_profile) {
+      case MobilityProfile.wheelchair:
+        return _language == 'pl' ? 'Wózek inwalidzki' : 'Wheelchair';
+      case MobilityProfile.cane:
+        return _language == 'pl' ? 'O kuli / Senior' : 'Cane / Senior';
+      case MobilityProfile.stroller:
+        return _language == 'pl' ? 'Wózek dziecięcy' : 'Stroller';
+    }
   }
 
   void openAudit(AccessibilityAudit audit) {
@@ -142,59 +223,14 @@ class AppState extends ChangeNotifier {
 
   void planRouteFromParking(ParkingSpot spot) {
     _selectedParking = null;
-    _customPin = null;
-    final start = spot.location;
-    const dest = LatLng(50.0617, 19.9373); // Rynek Sukiennice
-
-    final customAccessibleRoute = RouteModel(
-      id: 'route_from_${spot.id}',
-      titlePl: 'Trasa z koperty: ${spot.street}',
-      titleEn: 'Route from spot: ${spot.street}',
-      type: RouteType.accessible,
-      polylineColor: const Color(0xFF10B981),
-      distanceMeters: 620,
-      durationMinutes: 8,
-      accessibilityScore: _profile == MobilityProfile.wheelchair ? 98 : (_profile == MobilityProfile.cane ? 96 : 97),
-      stairsAvoided: 12,
-      surfaceSummaryPl: 'Nawierzchnia sprawdzona przez AI. 100% obniżonych krawężników.',
-      surfaceSummaryEn: 'AI-verified surface. 100% dropped curbs.',
-      coordinates: [
-        start,
-        LatLng(
-          start.latitude + (dest.latitude - start.latitude) * 0.4,
-          start.longitude + (dest.longitude - start.longitude) * 0.2,
-        ),
-        LatLng(
-          start.latitude + (dest.latitude - start.latitude) * 0.7,
-          start.longitude + (dest.longitude - start.longitude) * 0.8,
-        ),
-        dest,
-      ],
-      audits: [
-        AccessibilityAudit(
-          id: 'aud_custom_${spot.id}',
-          checkpointName: 'Wyjazd z koperty (${spot.street})',
-          location: start,
-          photoUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
-          isAccessible: true,
-          score: 97,
-          stairsDetected: false,
-          curbStatus: 'Zjazd 0cm bezpośrednio na chodnik',
-          surfaceType: 'Płyty gładkie',
-          hazards: const [],
-          aiVerdictPl: 'Bezpieczny zjazd z koperty bezpośrednio do strefy pieszej.',
-          aiVerdictEn: 'Safe curb cut directly connecting parking to pedestrian zone.',
-        ),
-      ],
-      profileHighlightsPl: RoutingService.presets.first.titlePl.isNotEmpty
-          ? (_profile == MobilityProfile.wheelchair
-              ? ['Bezpośredni zjazd z koperty', '100% ramp']
-              : ['Krótki dystans do Rynku', 'Brak schodów'])
-          : [],
+    _startLocation = KrakowLocation(
+      id: spot.id,
+      namePl: 'Koperta: ${spot.street}',
+      nameEn: 'Disabled spot: ${spot.street}',
+      address: spot.street,
+      point: spot.location,
+      category: 'parking',
     );
-
-    _routes = [customAccessibleRoute];
-    _selectedRouteIndex = 0;
-    notifyListeners();
+    planRouteBetweenSelectedPoints(showLoader: true);
   }
 }

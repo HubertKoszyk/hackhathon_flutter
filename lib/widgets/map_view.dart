@@ -140,6 +140,36 @@ class _KrakMapViewState extends State<KrakMapView> {
               ),
             ],
 
+            // 2.5 Bieżąca pozycja użytkownika (GPS)
+            if (state.userCurrentGpsPoint != null)
+              Marker(
+                point: state.userCurrentGpsPoint!,
+                width: 32,
+                height: 32,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // 3. Punkty kontrolne / Przeszkody AI Street View
             if (activeRoute != null)
               ...activeRoute.audits.map(
@@ -209,7 +239,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                 width: 190,
                 height: 75,
                 child: GestureDetector(
-                  onTap: () => state.routeToCustomPoint(state.customPin!),
+                  onTap: () => state.planRouteBetweenSelectedPoints(showLoader: true),
                   child: Column(
                     children: [
                       Container(
