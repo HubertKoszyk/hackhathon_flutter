@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/vision_audit_service.dart';
+import 'api_key_dialog.dart';
 
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
@@ -94,6 +96,35 @@ class TopBar extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                  // Przycisk statusu Gemini AI API
+                  IconButton(
+                    icon: Stack(
+                      children: [
+                        const Icon(Icons.auto_awesome, color: Color(0xFF38BDF8), size: 20),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: VisionAuditService.hasApiKey
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    tooltip: 'Google Gemini API Key',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const ApiKeyDialog(),
+                      );
+                    },
                   ),
                   // Przycisk warstwy parkingów
                   IconButton(
