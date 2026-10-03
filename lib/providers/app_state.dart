@@ -17,7 +17,6 @@ class AppState extends ChangeNotifier {
   int _selectedRouteIndex = 0; // 0 = Accessible, 1 = Standard
   ParkingSpot? _selectedParking;
   AccessibilityAudit? _activeAudit;
-  bool _isAuditing = false;
 
   late List<ParkingSpot> _parkingSpots;
   late List<RouteModel> _routes;
@@ -35,7 +34,6 @@ class AppState extends ChangeNotifier {
   int get selectedRouteIndex => _selectedRouteIndex;
   ParkingSpot? get selectedParking => _selectedParking;
   AccessibilityAudit? get activeAudit => _activeAudit;
-  bool get isAuditing => _isAuditing;
 
   List<ParkingSpot> get parkingSpots => _parkingSpots;
   List<RouteModel> get routes => _routes;

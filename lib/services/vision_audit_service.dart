@@ -4,16 +4,19 @@ import 'package:http/http.dart' as http;
 import '../models/accessibility_audit.dart';
 
 class VisionAuditService {
-  // Domyślnie próbuje pobrać klucz z parametru --dart-define=GEMINI_API_KEY=...
-  static String? geminiApiKey = const String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  // Domyślny klucz przekazany przez zespół lub z parametru --dart-define
+  static String geminiApiKey = const String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: 'AQ.Ab8RN6IFCYt6MuLDS1bxU4XgVyIUqJ9CZ1vAPVLWUNewJjsPYA',
+  );
 
-  static bool get hasApiKey => geminiApiKey != null && geminiApiKey!.trim().isNotEmpty;
+  static bool get hasApiKey => geminiApiKey.trim().isNotEmpty;
 
   /// Testuje poprawność klucza API Gemini prostym zapytaniem
   static Future<bool> testApiKey(String key) async {
     try {
       final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=$key',
       );
       final response = await http.post(
         url,
@@ -22,7 +25,7 @@ class VisionAuditService {
           "contents": [
             {
               "parts": [
-                {"text": "Odpowiedz tylko jednym słowem: OK"}
+                {"text": "Odpowiedz tylko: OK"}
               ]
             }
           ]
@@ -42,29 +45,34 @@ class VisionAuditService {
     Uint8List? directImageBytes,
     bool simulateIfNoKey = true,
   }) async {
-    final key = geminiApiKey?.trim();
+    final key = geminiApiKey.trim();
 
-    if (key != null && key.isNotEmpty) {
+    if (key.isNotEmpty) {
       try {
         Uint8List? imageBytes = directImageBytes;
 
         // Jeśli nie przekazano bezpośrednich bajtów, pobieramy obrazek z URL
         if (imageBytes == null && photoUrl.isNotEmpty) {
-          final imgResponse = await http.get(Uri.parse(photoUrl)).timeout(
-                const Duration(seconds: 5),
-              );
-          if (imgResponse.statusCode == 200) {
-            imageBytes = imgResponse.bodyBytes;
+          try {
+            final imgResponse = await http.get(Uri.parse(photoUrl)).timeout(
+                  const Duration(seconds: 4),
+                );
+            if (imgResponse.statusCode == 200) {
+              imageBytes = imgResponse.bodyBytes;
+            }
+          } catch (_) {
+            // Ignoruj błąd pobierania obrazka, model przeanalizuje kontekst tekstowy
           }
         }
 
         final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key',
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=$key',
         );
 
         final prompt = '''
 Jesteś audytorem miejskim ds. dostępności architektonicznej (WCAG / urban accessibility) dla Miasta Krakowa.
-Przeanalizuj to zdjęcie z perspektywy osoby na wózku inwalidzkim, osoby o kulach, seniora lub rodzica z wózkiem.
+Punkt trasy do audytu: "$checkpointName".
+Przeanalizuj ten punkt z perspektywy osoby na wózku inwalidzkim, osoby o kulach, seniora lub rodzica z wózkiem dziecięcym.
 
 Oceń:
 1. Czy występują schody/stopnie? Jeśli tak, ile stopni i czy jest widoczna rampa/podjazd?
@@ -72,10 +80,10 @@ Oceń:
 3. Jaka jest nawierzchnia (płyty szlifowane, asfalt, kocie łby, uszkodzenia, dziury)?
 4. Wystaw ocenę dostępności od 0 do 100 punktów.
 
-ZWRÓĆ WYŁĄCZNIE CZYSTY JSON, bez znaczników markdown ```json:
+ZWRÓĆ WYŁĄCZNIE CZYSTY JSON (bez formatowania markdown ```json):
 {
   "isAccessible": true,
-  "score": 92,
+  "score": 95,
   "stairsDetected": false,
   "stairsCount": 0,
   "curbStatus": "Krawężnik zlicowany 0-1 cm",
@@ -106,12 +114,9 @@ ZWRÓĆ WYŁĄCZNIE CZYSTY JSON, bez znaczników markdown ```json:
           body: jsonEncode({
             "contents": [
               {"parts": parts}
-            ],
-            "generationConfig": {
-              "temperature": 0.2,
-            }
+            ]
           }),
-        ).timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 8));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -131,17 +136,17 @@ ZWRÓĆ WYŁĄCZNIE CZYSTY JSON, bez znaczników markdown ```json:
             curbStatus: parsed['curbStatus'] ?? 'Standardowy',
             surfaceType: parsed['surfaceType'] ?? 'Płytka miejska',
             hazards: List<String>.from(parsed['hazards'] ?? []),
-            aiVerdictPl: parsed['aiVerdictPl'] ?? 'Przeanalizowano przez Gemini Vision.',
-            aiVerdictEn: parsed['aiVerdictEn'] ?? 'Analyzed by Gemini Vision.',
+            aiVerdictPl: parsed['aiVerdictPl'] ?? 'Przeanalizowano przez Gemini 3.5 Flash.',
+            aiVerdictEn: parsed['aiVerdictEn'] ?? 'Analyzed by Gemini 3.5 Flash.',
           );
         }
       } catch (e) {
-        // W razie błędu sieci/limitu, bezpieczny fallback na dane wzorcowe
+        // W razie timeoutu lub błędu, bezpieczny fallback na dane wzorcowe
       }
     }
 
-    // Bezpieczny fallback na żywo do prezentacji jeśli klucz nie został podany lub wystąpił błąd
-    await Future.delayed(const Duration(milliseconds: 600));
+    // Bezpieczny fallback
+    await Future.delayed(const Duration(milliseconds: 400));
     return AccessibilityAudit(
       id: 'audit_sim_${DateTime.now().millisecondsSinceEpoch}',
       checkpointName: checkpointName,

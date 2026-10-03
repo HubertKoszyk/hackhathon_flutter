@@ -19,7 +19,7 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: VisionAuditService.geminiApiKey ?? '');
+    _controller = TextEditingController(text: VisionAuditService.geminiApiKey);
   }
 
   @override
