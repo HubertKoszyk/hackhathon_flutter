@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -19,6 +20,18 @@ class _KrakMapViewState extends State<KrakMapView> {
     final state = context.watch<AppState>();
     final activeRoute = state.currentRoute;
     final isPL = state.language == 'pl';
+
+    // Auto-recenter mapy w trybie nawigacji na żywo
+    if (state.isNavigating && state.navigationUserPosition != null) {
+      if (state.shouldRecenterMap) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && state.navigationUserPosition != null) {
+            _mapController.move(state.navigationUserPosition!, 17.5);
+            state.clearRecenterMapFlag();
+          }
+        });
+      }
+    }
 
     return FlutterMap(
       mapController: _mapController,
@@ -140,8 +153,62 @@ class _KrakMapViewState extends State<KrakMapView> {
               ),
             ],
 
-            // 2.5 Bieżąca pozycja użytkownika (GPS)
-            if (state.userCurrentGpsPoint != null)
+            // 2.3 Marker użytkownika w trybie nawigacji na żywo (Google Maps Navigation Arrow)
+            if (state.isNavigating && state.navigationUserPosition != null)
+              Marker(
+                point: state.navigationUserPosition!,
+                width: 56,
+                height: 56,
+                child: Transform.rotate(
+                  angle: (state.navigationBearing * math.pi / 180),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Poświata kierunkowa / radar radaru
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFF10B981).withValues(alpha: 0.45),
+                              const Color(0xFF10B981).withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Wskaźnik pozycji Google Maps z białą obwódką
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.navigation,
+                            color: Colors.white,
+                            size: 19,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // 2.5 Bieżąca pozycja użytkownika (GPS poza nawigacją)
+            if (!state.isNavigating && state.userCurrentGpsPoint != null)
               Marker(
                 point: state.userCurrentGpsPoint!,
                 width: 32,

@@ -525,33 +525,60 @@ class RouteCard extends StatelessWidget {
               ),
             ),
 
-          // 6. Przycisk Audytu Street View
-          if (activeRoute.audits.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 3, 12, 8),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => state.openAudit(activeRoute.audits.first),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0284C7),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          // 6. Przyciski akcji: "Rozpocznij trasę (Live Navigation)" oraz "Audyt Street View"
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: Row(
+              children: [
+                // Główny przycisk nawigacji Live Google Maps
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton.icon(
+                    onPressed: state.startNavigation,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981), // Emerald Google Maps
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 4,
+                      shadowColor: const Color(0xFF10B981).withValues(alpha: 0.5),
                     ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.streetview, size: 16),
-                  label: Text(
-                    isPL
-                        ? 'Audyt Street View AI (${activeRoute.audits.length} punkty ze zdjęciem)'
-                        : 'AI Street View Audit (${activeRoute.audits.length} photo points)',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    icon: const Icon(Icons.navigation, size: 18),
+                    label: Text(
+                      isPL ? 'Rozpocznij trasę' : 'Start Navigation',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
+                    ),
                   ),
                 ),
-              ),
+                if (activeRoute.audits.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  // Przycisk Audytu Street View
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () => state.openAudit(activeRoute.audits.first),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.streetview, size: 16),
+                      label: Text(
+                        isPL ? 'Street View' : 'Street View',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
+          ),
         ],
       ),
     );

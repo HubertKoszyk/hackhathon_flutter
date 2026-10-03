@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:hackhathon_flutter/models/route_model.dart';
 import 'package:hackhathon_flutter/providers/app_state.dart';
 import 'package:hackhathon_flutter/services/routing_service.dart';
 import 'package:hackhathon_flutter/services/ai_route_analyst.dart';
+import 'package:hackhathon_flutter/services/navigation_service.dart';
 
 void main() {
   group('Routing & Statistics Tests', () {
@@ -166,6 +168,48 @@ void main() {
           expect(audit.isAccessible, isFalse);
         }
       }
+    });
+
+    test('NavigationService generates turn-by-turn maneuvers with accessibility notes', () {
+      final routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', MobilityProfile.wheelchair);
+      final accessibleRoute = routes.firstWhere((r) => r.type == RouteType.accessible);
+
+      final steps = NavigationService.generateStepsForRoute(accessibleRoute, MobilityProfile.wheelchair);
+      expect(steps.length, greaterThanOrEqualTo(2));
+
+      // Pierwszy krok - Start
+      expect(steps.first.maneuverIcon, Icons.navigation);
+      expect(steps.first.instructionPl.toLowerCase().contains('ruszaj') || steps.first.instructionPl.toLowerCase().contains('kierunku'), isTrue);
+      expect(steps.first.accessibilityNotePl, isNotNull);
+
+      // Ostatni krok - Meta
+      expect(steps.last.maneuverIcon, Icons.flag);
+      expect(steps.last.instructionPl.toLowerCase().contains('osiągnięty') || steps.last.instructionPl.toLowerCase().contains('cel'), isTrue);
+    });
+
+    test('AppState startNavigation and stopNavigation controls live navigation state', () {
+      final state = AppState();
+      expect(state.isNavigating, isFalse);
+      expect(state.navigationUserPosition, isNull);
+
+      // Rozpoczęcie nawigacji na żywo
+      state.startNavigation();
+      expect(state.isNavigating, isTrue);
+      expect(state.navigationUserPosition, isNotNull);
+      expect(state.navigationSteps.isNotEmpty, isTrue);
+      expect(state.remainingDistance, greaterThan(0));
+      expect(state.remainingDurationSeconds, greaterThan(0));
+
+      // Zmiana prędkości symulacji i wyciszenia
+      state.setSimulationSpeed(2.0);
+      expect(state.simulationSpeedMultiplier, 2.0);
+
+      state.toggleVoiceMute();
+      expect(state.isVoiceMuted, isTrue);
+
+      // Zatrzymanie nawigacji
+      state.stopNavigation();
+      expect(state.isNavigating, isFalse);
     });
   });
 }
