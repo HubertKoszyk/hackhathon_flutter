@@ -123,6 +123,7 @@ class _KrakMapViewState extends State<KrakMapView> {
               ...state.parkingSpots.map((spot) {
                 final isSelected = state.selectedParking?.id == spot.id;
                 return Marker(
+                  key: ValueKey('parking_${spot.id}'),
                   point: spot.location,
                   width: isSelected ? 44 : 36,
                   height: isSelected ? 44 : 36,
@@ -170,6 +171,7 @@ class _KrakMapViewState extends State<KrakMapView> {
                     : const Color(0xFFA78BFA);
 
                 return Marker(
+                  key: ValueKey('place_${place.id}'),
                   point: place.location,
                   width: isSelected ? 48 : 40,
                   height: isSelected ? 48 : 40,
