@@ -12,6 +12,6 @@ void main() {
       ),
     );
 
-    expect(find.text('KrakAccess'), findsOneWidget);
+    expect(find.byType(KrakAccessApp), findsOneWidget);
   });
 }

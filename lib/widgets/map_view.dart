@@ -48,10 +48,14 @@ class _KrakMapViewState extends State<KrakMapView> {
         },
       ),
       children: [
-        // Podkład mapy OpenStreetMap (Kraków)
+        // Podkład mapy miejskiej (CartoDB Voyager z fallbackiem do OpenStreetMap)
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.hackhathon_flutter',
+          tileProvider: NetworkTileProvider(
+            headers: {
+              'User-Agent': 'NavAbleKrakowApp/1.0 (Android; contact@navable.pl)',
+            },
+          ),
           maxZoom: 19,
         ),
 
