@@ -297,7 +297,7 @@ class RoutingService {
       audits: [accessibleAudit],
       profileHighlightsPl: analysis.highlightsPl,
       profileHighlightsEn: analysis.highlightsEn,
-      detectedBarrierPl: 'Bariera na trasie prostej: ${analysis.barrierNamePl}',
+      detectedBarrierPl: 'Wskaźnik dostępności: ${analysis.barrierNamePl}',
       detectedBarrierEn: 'Barrier on direct route: ${analysis.barrierNameEn}',
       bypassReasonPl: analysis.bypassReasonPl,
       bypassReasonEn: analysis.bypassReasonEn,

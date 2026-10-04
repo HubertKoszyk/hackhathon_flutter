@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/vision_audit_service.dart';
 import 'api_key_dialog.dart';
+import 'data_sources_dialog.dart';
 
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
@@ -168,6 +169,27 @@ class TopBar extends StatelessWidget {
                             color: state.showParkingLayer
                                 ? const Color(0xFF38BDF8)
                                 : Colors.white54,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Przycisk informacji o źródłach danych
+                      InkWell(
+                        onTap: () {
+                          showDataSourcesDialog(context);
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.info_outline,
+                            size: 18,
+                            color: Colors.white70,
                           ),
                         ),
                       ),

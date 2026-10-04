@@ -8,7 +8,7 @@ class VisionAuditService {
   // Domyślny klucz przekazany przez zespół lub z parametru --dart-define
   static String geminiApiKey = const String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AQ.Ab8RN6IFCYt6MuLDS1bxU4XgVyIUqJ9CZ1vAPVLWUNewJjsPYA',
+    defaultValue: '',
   );
 
   static bool get hasApiKey => geminiApiKey.trim().isNotEmpty;

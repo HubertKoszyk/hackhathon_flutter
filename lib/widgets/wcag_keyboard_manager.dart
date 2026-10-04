@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import 'data_sources_dialog.dart';
 import 'filters_modal.dart';
 import 'wcag_help_dialog.dart';
 
@@ -97,6 +98,13 @@ class WcagKeyboardManager extends StatelessWidget {
         // Alt + L: Przełącz język
         if (isAlt && event.logicalKey == LogicalKeyboardKey.keyL) {
           state.toggleLanguage();
+          return KeyEventResult.handled;
+        }
+
+        // Alt + I lub I (gdy nie piszemy): Otwórz informacje o źródłach danych
+        if ((isAlt && event.logicalKey == LogicalKeyboardKey.keyI) ||
+            (!isTypingInField && !isControl && event.logicalKey == LogicalKeyboardKey.keyI)) {
+          showDataSourcesDialog(context);
           return KeyEventResult.handled;
         }
 

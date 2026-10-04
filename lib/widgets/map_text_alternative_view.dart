@@ -47,12 +47,22 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
     final isUk = state.language == 'uk';
     final isHighContrast = state.isHighContrastMode;
 
-    final bgColor = isHighContrast ? const Color(0xFF000000) : const Color(0xFFF8FAFC);
-    final surfaceColor = isHighContrast ? const Color(0xFF141414) : Colors.white;
+    final bgColor = isHighContrast
+        ? const Color(0xFF000000)
+        : const Color(0xFFF8FAFC);
+    final surfaceColor = isHighContrast
+        ? const Color(0xFF141414)
+        : Colors.white;
     final textColor = isHighContrast ? Colors.white : const Color(0xFF0F172A);
-    final accentColor = isHighContrast ? const Color(0xFFFACC15) : const Color(0xFF0048FF);
-    final borderColor = isHighContrast ? const Color(0xFFFACC15) : const Color(0xFFE2E8F0);
-    final subtextColor = isHighContrast ? const Color(0xFFE2E8F0) : const Color(0xFF475569);
+    final accentColor = isHighContrast
+        ? const Color(0xFFFACC15)
+        : const Color(0xFF0048FF);
+    final borderColor = isHighContrast
+        ? const Color(0xFFFACC15)
+        : const Color(0xFFE2E8F0);
+    final subtextColor = isHighContrast
+        ? const Color(0xFFE2E8F0)
+        : const Color(0xFF475569);
 
     final activeRoute = state.currentRoute;
     final List<NavigationStep> routeSteps = activeRoute != null
@@ -63,10 +73,12 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       if (_searchQuery.isEmpty) return true;
       final name = place.name.toLowerCase();
       final addr = place.address.toLowerCase();
-      final desc = (isPl ? place.descriptionPl : place.descriptionEn).toLowerCase();
-      return name.contains(_searchQuery) || addr.contains(_searchQuery) || desc.contains(_searchQuery);
+      final desc = (isPl ? place.descriptionPl : place.descriptionEn)
+          .toLowerCase();
+      return name.contains(_searchQuery) ||
+          addr.contains(_searchQuery) ||
+          desc.contains(_searchQuery);
     }).toList();
-
 
     final filteredParkings = state.parkingSpots.where((spot) {
       if (_searchQuery.isEmpty) return true;
@@ -82,14 +94,23 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: state.textScale > 1.15 ? 74 : 60,
-        shape: Border(bottom: BorderSide(color: borderColor, width: isHighContrast ? 2.5 : 1.0)),
+        shape: Border(
+          bottom: BorderSide(
+            color: borderColor,
+            width: isHighContrast ? 2.5 : 1.0,
+          ),
+        ),
         leading: Semantics(
           button: true,
-          label: isPl ? 'Wróć do mapy graficznej [Esc]' : 'Return to graphic map [Esc]',
+          label: isPl
+              ? 'Wróć do mapy graficznej [Esc]'
+              : 'Return to graphic map [Esc]',
           child: IconButton(
             icon: Icon(Icons.arrow_back, color: textColor),
             onPressed: () => state.setMapTextAlternative(false),
-            tooltip: isPl ? 'Wróć do mapy [Esc / Alt+M]' : 'Return to map [Esc / Alt+M]',
+            tooltip: isPl
+                ? 'Wróć do mapy [Esc / Alt+M]'
+                : 'Return to map [Esc / Alt+M]',
           ),
         ),
         title: FittedBox(
@@ -105,7 +126,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                   Icon(Icons.article_outlined, color: accentColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    isPl ? 'Tekstowa alternatywa mapy' : (isUk ? 'Текстова альтернатива карти' : 'Map Text Alternative'),
+                    isPl
+                        ? 'Tekstowa alternatywa mapy'
+                        : (isUk
+                              ? 'Текстова альтернатива карти'
+                              : 'Map Text Alternative'),
                     style: TextStyle(
                       color: textColor,
                       fontSize: 16.5,
@@ -116,7 +141,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               ),
               Text(
                 'WCAG 2.2 AA (1.1.1 Non-text Content)',
-                style: TextStyle(color: accentColor, fontSize: 11, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -125,7 +154,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           // Przycisk Audiodeskrypcji / Odczytu na głos
           Semantics(
             button: true,
-            label: isPl ? 'Odczytaj podsumowanie na głos' : 'Read summary aloud',
+            label: isPl
+                ? 'Odczytaj podsumowanie na głos'
+                : 'Read summary aloud',
             child: IconButton(
               icon: Icon(Icons.volume_up, color: accentColor),
               onPressed: state.readCurrentSummaryAloud,
@@ -150,7 +181,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           // Pomoc i skróty klawiszowe
           Semantics(
             button: true,
-            label: isPl ? 'Przewodnik dostępności i skróty' : 'Accessibility guide & shortcuts',
+            label: isPl
+                ? 'Przewodnik dostępności i skróty'
+                : 'Accessibility guide & shortcuts',
             child: IconButton(
               icon: Icon(Icons.help_outline, color: textColor),
               onPressed: () => showWcagHelpDialog(context),
@@ -166,16 +199,26 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             // 1. BANER POWROTU DO MAPY GRAFICZNEJ
             Semantics(
               button: true,
-              label: isPl ? 'Przycisk: Wróć do tradycyjnego widoku mapy' : 'Button: Return to traditional graphic map view',
+              label: isPl
+                  ? 'Przycisk: Wróć do tradycyjnego widoku mapy'
+                  : 'Button: Return to traditional graphic map view',
               child: InkWell(
                 onTap: () => state.setMapTextAlternative(false),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: isHighContrast ? 0.2 : 0.1),
+                    color: accentColor.withValues(
+                      alpha: isHighContrast ? 0.2 : 0.1,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: accentColor, width: isHighContrast ? 2.5 : 1.5),
+                    border: Border.all(
+                      color: accentColor,
+                      width: isHighContrast ? 2.5 : 1.5,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -186,18 +229,32 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isPl ? 'Przełącz z powrotem na widok mapy graficznej' : 'Switch back to graphical map view',
-                              style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold),
+                              isPl
+                                  ? 'Przełącz z powrotem na widok mapy graficznej'
+                                  : 'Switch back to graphical map view',
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
-                              isPl ? 'Naciśnij Enter, Spację lub skrót Alt + M' : 'Press Enter, Space or Alt + M shortcut',
-                              style: TextStyle(color: subtextColor, fontSize: 12),
+                              isPl
+                                  ? 'Naciśnij Enter, Spację lub skrót Alt + M'
+                                  : 'Press Enter, Space or Alt + M shortcut',
+                              style: TextStyle(
+                                color: subtextColor,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: surfaceColor,
                           borderRadius: BorderRadius.circular(6),
@@ -205,7 +262,12 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                         ),
                         child: Text(
                           'Alt + M',
-                          style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ),
                     ],
@@ -234,17 +296,29 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                         children: [
                           ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: constraints.maxWidth > 140 ? constraints.maxWidth - 105 : constraints.maxWidth,
+                              maxWidth: constraints.maxWidth > 140
+                                  ? constraints.maxWidth - 105
+                                  : constraints.maxWidth,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.my_location, color: accentColor, size: 20),
+                                Icon(
+                                  Icons.my_location,
+                                  color: accentColor,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
-                                    isPl ? 'Orientacja przestrzenna (GPS)' : 'Spatial Orientation (GPS)',
-                                    style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+                                    isPl
+                                        ? 'Orientacja przestrzenna (GPS)'
+                                        : 'Spatial Orientation (GPS)',
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -252,18 +326,32 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                           ),
                           Semantics(
                             button: true,
-                            label: isPl ? 'Odśwież pozycję GPS' : 'Refresh GPS location',
+                            label: isPl
+                                ? 'Odśwież pozycję GPS'
+                                : 'Refresh GPS location',
                             child: TextButton.icon(
                               style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              onPressed: () => state.useCurrentLocationAsStart(),
-                              icon: Icon(Icons.refresh, size: 16, color: accentColor),
+                              onPressed: () =>
+                                  state.useCurrentLocationAsStart(),
+                              icon: Icon(
+                                Icons.refresh,
+                                size: 16,
+                                color: accentColor,
+                              ),
                               label: Text(
                                 isPl ? 'Lokalizuj' : 'Locate',
-                                style: TextStyle(color: accentColor, fontSize: 13, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: accentColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -279,13 +367,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                     subtextColor,
                   ),
                   _buildKeyValueRow(
-                    isPl ? 'Współrzędne GPS:' : 'GPS Coordinates:',
-                    '${state.startLocation.point.latitude.toStringAsFixed(4)}°N, ${state.startLocation.point.longitude.toStringAsFixed(4)}°E',
-                    textColor,
-                    subtextColor,
-                  ),
-                  _buildKeyValueRow(
-                    isPl ? 'Aktywny profil mobilności:' : 'Active mobility profile:',
+                    isPl
+                        ? 'Aktywny profil mobilności:'
+                        : 'Active mobility profile:',
                     _getProfileName(state.profile, isPl),
                     textColor,
                     subtextColor,
@@ -306,13 +390,19 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             // 3. WYSZUKIWARKA I FILTRY ZAWODNOŚCI TEKSTOWEJ
             Semantics(
               textField: true,
-              label: isPl ? 'Wyszukaj w alternatywie tekstowej' : 'Search in text alternative',
-              hint: isPl ? 'Filtruj miejsca, ulice, parkingi...' : 'Filter places, streets, parking...',
+              label: isPl
+                  ? 'Wyszukaj w alternatywie tekstowej'
+                  : 'Search in text alternative',
+              hint: isPl
+                  ? 'Filtruj miejsca, ulice, parkingi...'
+                  : 'Filter places, streets, parking...',
               child: TextField(
                 controller: _searchFilterController,
                 style: TextStyle(color: textColor, fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: isPl ? 'Filtruj tekstowo (np. Wawel, Rynek, parking)...' : 'Filter textually...',
+                  hintText: isPl
+                      ? 'Filtruj tekstowo (np. Wawel, Rynek, parking)...'
+                      : 'Filter textually...',
                   hintStyle: TextStyle(color: subtextColor),
                   prefixIcon: Icon(Icons.search, color: accentColor),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -323,10 +413,16 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                       : null,
                   filled: true,
                   fillColor: surfaceColor,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: borderColor, width: isHighContrast ? 2.0 : 1.0),
+                    borderSide: BorderSide(
+                      color: borderColor,
+                      width: isHighContrast ? 2.0 : 1.0,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -343,13 +439,37 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildFilterChip('all', isPl ? 'Wszystko' : 'All', _selectedSection, state, isHighContrast),
+                  _buildFilterChip(
+                    'all',
+                    isPl ? 'Wszystko' : 'All',
+                    _selectedSection,
+                    state,
+                    isHighContrast,
+                  ),
                   const SizedBox(width: 8),
-                  _buildFilterChip('route', isPl ? 'Wyznaczona trasa' : 'Route', _selectedSection, state, isHighContrast),
+                  _buildFilterChip(
+                    'route',
+                    isPl ? 'Wyznaczona trasa' : 'Route',
+                    _selectedSection,
+                    state,
+                    isHighContrast,
+                  ),
                   const SizedBox(width: 8),
-                  _buildFilterChip('places', isPl ? 'Miejsca bez barier (POI)' : 'Places', _selectedSection, state, isHighContrast),
+                  _buildFilterChip(
+                    'places',
+                    isPl ? 'Miejsca bez barier (POI)' : 'Places',
+                    _selectedSection,
+                    state,
+                    isHighContrast,
+                  ),
                   const SizedBox(width: 8),
-                  _buildFilterChip('parking', isPl ? 'Koperty dla ON' : 'Parking', _selectedSection, state, isHighContrast),
+                  _buildFilterChip(
+                    'parking',
+                    isPl ? 'Koperty dla ON' : 'Parking',
+                    _selectedSection,
+                    state,
+                    isHighContrast,
+                  ),
                 ],
               ),
             ),
@@ -360,7 +480,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             if (_selectedSection == 'all' || _selectedSection == 'route') ...[
               _buildSectionTitle(
                 icon: Icons.directions_walk,
-                title: isPl ? 'Wyznaczona trasa krok po kroku' : 'Planned Route Turn-by-Turn',
+                title: isPl
+                    ? 'Wyznaczona trasa krok po kroku'
+                    : 'Planned Route Turn-by-Turn',
                 accentColor: accentColor,
                 textColor: textColor,
               ),
@@ -380,8 +502,14 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  isPl ? 'Szczegółowe instrukcje i audyt poszczególnych manewrów:' : 'Detailed segment instructions and architectural audits:',
-                  style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                  isPl
+                      ? 'Szczegółowe instrukcje i audyt poszczególnych manewrów:'
+                      : 'Detailed segment instructions and architectural audits:',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 for (int i = 0; i < routeSteps.length; i++)
@@ -415,7 +543,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             if (_selectedSection == 'all' || _selectedSection == 'places') ...[
               _buildSectionTitle(
                 icon: Icons.domain,
-                title: isPl ? 'Miejsca i obiekty bez barier w Krakowie' : 'Accessible Venues in Kraków',
+                title: isPl
+                    ? 'Miejsca i obiekty bez barier w Krakowie'
+                    : 'Accessible Venues in Kraków',
                 count: filteredPlaces.length,
                 accentColor: accentColor,
                 textColor: textColor,
@@ -425,7 +555,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    isPl ? 'Brak obiektów spełniających kryteria wyszukiwania.' : 'No places match query.',
+                    isPl
+                        ? 'Brak obiektów spełniających kryteria wyszukiwania.'
+                        : 'No places match query.',
                     style: TextStyle(color: subtextColor, fontSize: 13),
                   ),
                 )
@@ -449,7 +581,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             if (_selectedSection == 'all' || _selectedSection == 'parking') ...[
               _buildSectionTitle(
                 icon: Icons.local_parking,
-                title: isPl ? 'Miejsca postojowe dla osób z niepełnosprawnościami' : 'Dedicated Disabled Parking Bays',
+                title: isPl
+                    ? 'Miejsca postojowe dla osób z niepełnosprawnościami'
+                    : 'Dedicated Disabled Parking Bays',
                 count: filteredParkings.length,
                 accentColor: accentColor,
                 textColor: textColor,
@@ -459,7 +593,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    isPl ? 'Brak miejsc postojowych spełniających kryteria.' : 'No parking bays match query.',
+                    isPl
+                        ? 'Brak miejsc postojowych spełniających kryteria.'
+                        : 'No parking bays match query.',
                     style: TextStyle(color: subtextColor, fontSize: 13),
                   ),
                 )
@@ -496,7 +632,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                       Expanded(
                         child: Text(
                           'NavAble Kraków • WCAG 2.2 AA Certified',
-                          style: TextStyle(color: textColor, fontSize: 13.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -506,7 +646,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                     isPl
                         ? 'Ten widok tekstowy stanowi oficjalną alternatywę dla mapy miejskiej zgodnie z wymogami ustawy o dostępności cyfrowej stron internetowych i aplikacji mobilnych podmiotów publicznych.'
                         : 'This text view serves as the official alternative for the urban map under digital accessibility legislation.',
-                    style: TextStyle(color: subtextColor, fontSize: 11.5, height: 1.35),
+                    style: TextStyle(
+                      color: subtextColor,
+                      fontSize: 11.5,
+                      height: 1.35,
+                    ),
                   ),
                 ],
               ),
@@ -527,7 +671,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
     bool isHighContrast,
   ) {
     final isSelected = selectedId == id;
-    final accentColor = isHighContrast ? const Color(0xFFFACC15) : const Color(0xFF0048FF);
+    final accentColor = isHighContrast
+        ? const Color(0xFFFACC15)
+        : const Color(0xFF0048FF);
 
     return Semantics(
       button: true,
@@ -546,9 +692,15 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           ),
         ),
         selectedColor: accentColor,
-        backgroundColor: isHighContrast ? const Color(0xFF1E1E1E) : Colors.white,
+        backgroundColor: isHighContrast
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
         side: BorderSide(
-          color: isSelected ? accentColor : (isHighContrast ? const Color(0xFFFACC15) : const Color(0xFFCBD5E1)),
+          color: isSelected
+              ? accentColor
+              : (isHighContrast
+                    ? const Color(0xFFFACC15)
+                    : const Color(0xFFCBD5E1)),
           width: isHighContrast ? 2.0 : 1.0,
         ),
         onSelected: (_) {
@@ -574,7 +726,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
         Expanded(
           child: Text(
             title,
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         if (count != null)
@@ -587,7 +743,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             ),
             child: Text(
               '$count',
-              style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
       ],
@@ -605,7 +765,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: isHighContrast ? 2.5 : 1.2),
+        border: Border.all(
+          color: borderColor,
+          width: isHighContrast ? 2.5 : 1.2,
+        ),
         boxShadow: isHighContrast
             ? null
             : [
@@ -628,7 +791,7 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
     Color? badgeColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3.5),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 280;
@@ -638,12 +801,19 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               children: [
                 Text(
                   key,
-                  style: TextStyle(color: subtextColor, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: subtextColor,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 badgeColor != null
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: badgeColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
@@ -651,18 +821,26 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                         ),
                         child: Text(
                           value,
-                          style: TextStyle(color: badgeColor, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: badgeColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       )
                     : Text(
                         value,
-                        style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ],
             );
           }
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ConstrainedBox(
                 constraints: BoxConstraints(
@@ -671,7 +849,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 ),
                 child: Text(
                   key,
-                  style: TextStyle(color: subtextColor, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: subtextColor,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -680,7 +862,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                     ? Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -688,13 +873,21 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                           ),
                           child: Text(
                             value,
-                            style: TextStyle(color: badgeColor, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: badgeColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       )
                     : Text(
                         value,
-                        style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
             ],
@@ -731,15 +924,26 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF10B981), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFF10B981),
+                    width: 1.5,
+                  ),
                 ),
-                child: const Icon(Icons.check, color: Color(0xFF10B981), size: 16),
+                child: const Icon(
+                  Icons.check,
+                  color: Color(0xFF10B981),
+                  size: 16,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isPl ? route.titlePl : route.titleEn,
-                  style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Container(
@@ -750,7 +954,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 ),
                 child: const Text(
                   '100% WCAG',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -764,7 +972,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           ),
           _buildKeyValueRow(
             isPl ? 'Bariery / Schody:' : 'Barriers / Stairs:',
-            isPl ? '0 stopni (100% zjazdów WCAG)' : '0 stairs (100% WCAG ramps)',
+            isPl
+                ? '0 stopni (100% zjazdów WCAG)'
+                : '0 stairs (100% WCAG ramps)',
             textColor,
             subtextColor,
           ),
@@ -776,7 +986,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           ),
           _buildKeyValueRow(
             isPl ? 'Rodzaj nawierzchni:' : 'Pavement surface:',
-            isPl ? 'Gładkie płyty granitowe, asfalt' : 'Smooth granite slabs, asphalt',
+            isPl
+                ? 'Gładkie płyty granitowe, asfalt'
+                : 'Smooth granite slabs, asphalt',
             textColor,
             subtextColor,
           ),
@@ -787,9 +999,13 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
-                    foregroundColor: isHighContrast ? Colors.black : Colors.white,
+                    foregroundColor: isHighContrast
+                        ? Colors.black
+                        : Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   icon: const Icon(Icons.navigation, size: 18),
                   label: Text(
@@ -827,7 +1043,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isHighContrast ? 2.0 : 1.0),
+        border: Border.all(
+          color: borderColor,
+          width: isHighContrast ? 2.0 : 1.0,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -843,7 +1062,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             ),
             child: Text(
               '$stepIndex',
-              style: TextStyle(color: accentColor, fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -858,7 +1081,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                     Expanded(
                       child: Text(
                         step.instructionPl,
-                        style: TextStyle(color: textColor, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -873,21 +1100,35 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 if (step.accessibilityNotePl != null) ...[
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFF10B981), width: 1),
+                      border: Border.all(
+                        color: const Color(0xFF10B981),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check_circle_outline, size: 13, color: Color(0xFF10B981)),
+                        const Icon(
+                          Icons.check_circle_outline,
+                          size: 13,
+                          color: Color(0xFF10B981),
+                        ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             step.accessibilityNotePl!,
-                            style: const TextStyle(color: Color(0xFF10B981), fontSize: 11.5, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -922,7 +1163,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
         children: [
           Text(
             isPl ? 'Brak wyznaczonej trasy' : 'No active route',
-            style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -944,7 +1189,8 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               ),
               _buildPresetButton(
                 label: 'Wawel ➔ Kazimierz',
-                onPressed: () => state.loadPresetRoute('preset_wawel_kazimierz'),
+                onPressed: () =>
+                    state.loadPresetRoute('preset_wawel_kazimierz'),
                 accentColor: accentColor,
                 isHighContrast: isHighContrast,
               ),
@@ -977,7 +1223,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           Flexible(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -1009,7 +1258,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: isHighContrast ? 2.0 : 1.0),
+        border: Border.all(
+          color: borderColor,
+          width: isHighContrast ? 2.0 : 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1028,8 +1280,8 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                   place.category == AccessiblePlaceCategory.hotel
                       ? Icons.hotel
                       : (place.category == AccessiblePlaceCategory.culture
-                          ? Icons.theater_comedy
-                          : Icons.account_balance),
+                            ? Icons.theater_comedy
+                            : Icons.account_balance),
                   color: accentColor,
                   size: 20,
                 ),
@@ -1041,7 +1293,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                   children: [
                     Text(
                       place.name,
-                      style: TextStyle(color: textColor, fontSize: 14.5, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1060,7 +1316,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 ),
                 child: const Text(
                   'WCAG AA',
-                  style: TextStyle(color: Color(0xFF10B981), fontSize: 10.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF10B981),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1068,7 +1328,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
           const SizedBox(height: 8),
           Text(
             isPl ? place.descriptionPl : place.descriptionEn,
-            style: TextStyle(color: textColor.withValues(alpha: 0.9), fontSize: 12.5, height: 1.35),
+            style: TextStyle(
+              color: textColor.withValues(alpha: 0.9),
+              fontSize: 12.5,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1076,17 +1340,47 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
             runSpacing: 4,
             children: [
               if (place.hasWheelchairAccess)
-                _buildTag(isPl ? 'Dostępny dla wózków' : 'Wheelchair access', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  isPl ? 'Dostępny dla wózków' : 'Wheelchair access',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
               if (place.hasHearingLoop)
-                _buildTag(isPl ? 'Pętla indukcyjna' : 'Induction loop', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  isPl ? 'Pętla indukcyjna' : 'Induction loop',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
               if (place.hasBrailleOrAudio)
-                _buildTag('Braille / Audio', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  'Braille / Audio',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
               if (place.hasAdaptedRestroom)
-                _buildTag(isPl ? 'Toaleta ON' : 'Accessible WC', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  isPl ? 'Toaleta ON' : 'Accessible WC',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
               if (place.hasAssistanceDogWelcome)
-                _buildTag(isPl ? 'Pies asystujący' : 'Assistance dog', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  isPl ? 'Pies asystujący' : 'Assistance dog',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
               if (place.hasDedicatedParking)
-                _buildTag(isPl ? 'Parking ON' : 'Disabled parking', isHighContrast, textColor, borderColor),
+                _buildTag(
+                  isPl ? 'Parking ON' : 'Disabled parking',
+                  isHighContrast,
+                  textColor,
+                  borderColor,
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -1096,14 +1390,21 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
-                    foregroundColor: isHighContrast ? Colors.black : Colors.white,
+                    foregroundColor: isHighContrast
+                        ? Colors.black
+                        : Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   icon: const Icon(Icons.directions, size: 16),
                   label: Text(
                     isPl ? 'Wyznacz trasę tutaj' : 'Navigate here',
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () {
                     state.planRouteToAccessiblePlace(place);
@@ -1116,12 +1417,20 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: textColor,
                   side: BorderSide(color: borderColor, width: 1.2),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: Text(
                   isPl ? 'Audyt' : 'Audit',
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   state.selectAccessiblePlace(place);
@@ -1153,7 +1462,10 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isHighContrast ? 2.0 : 1.0),
+        border: Border.all(
+          color: borderColor,
+          width: isHighContrast ? 2.0 : 1.0,
+        ),
       ),
       child: Row(
         children: [
@@ -1164,7 +1476,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF0284C7), width: 1),
             ),
-            child: const Icon(Icons.accessible, color: Color(0xFF0284C7), size: 22),
+            child: const Icon(
+              Icons.accessible,
+              color: Color(0xFF0284C7),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1173,15 +1489,25 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               children: [
                 Text(
                   spot.street,
-                  style: TextStyle(color: textColor, fontSize: 13.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   '${spot.district} • ${spot.spotsCount} ${isPl ? "miejsca postojowe dla ON" : "bays"}',
                   style: TextStyle(color: subtextColor, fontSize: 12),
                 ),
                 Text(
-                  isPl ? 'Zjazd: 0 cm (zgodny z WCAG)' : 'Dropped curb: 0 cm (WCAG compliant)',
-                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 11.5, fontWeight: FontWeight.w600),
+                  isPl
+                      ? 'Zjazd: 0 cm (zgodny z WCAG)'
+                      : 'Dropped curb: 0 cm (WCAG compliant)',
+                  style: const TextStyle(
+                    color: Color(0xFF10B981),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -1191,7 +1517,9 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               backgroundColor: accentColor,
               foregroundColor: isHighContrast ? Colors.black : Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
               isPl ? 'Trasa' : 'Route',
@@ -1207,7 +1535,12 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
     );
   }
 
-  Widget _buildTag(String text, bool isHighContrast, Color textColor, Color borderColor) {
+  Widget _buildTag(
+    String text,
+    bool isHighContrast,
+    Color textColor,
+    Color borderColor,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -1217,7 +1550,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
       ),
       child: Text(
         text,
-        style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

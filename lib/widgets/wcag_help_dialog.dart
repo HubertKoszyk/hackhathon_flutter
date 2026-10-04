@@ -127,6 +127,7 @@ class WcagHelpDialog extends StatelessWidget {
                   _buildShortcutRow('Alt + L', isPl ? 'Przełącz język (PL / EN / UK)' : 'Toggle language', cardColor, textColor, borderColor),
                   _buildShortcutRow('Alt + R', isPl ? 'Wycentruj na pozycji GPS' : 'Recenter map on current GPS', cardColor, textColor, borderColor),
                   _buildShortcutRow('Alt + A', isPl ? 'Odczytaj podsumowanie na głos (Audiodeskrypcja)' : 'Read screen summary aloud', cardColor, textColor, borderColor),
+                  _buildShortcutRow('Alt + I  /  I', isPl ? 'Źródła i aktualność danych (Street View, Live)' : 'Data sources & freshness (Street View, Live)', cardColor, textColor, borderColor),
                   _buildShortcutRow('Tab / Shift+Tab', isPl ? 'Przechodzenie między aktywnymi elementami' : 'Navigate between focusable elements', cardColor, textColor, borderColor),
                   _buildShortcutRow('Enter / Spacja', isPl ? 'Aktywuj zaznaczony przycisk lub pole' : 'Activate focused control', cardColor, textColor, borderColor),
                   _buildShortcutRow('Escape', isPl ? 'Zamknij modal lub wróć do mapy' : 'Close modal or return to map', cardColor, textColor, borderColor),
