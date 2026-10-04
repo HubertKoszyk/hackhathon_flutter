@@ -224,41 +224,52 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
-                          Icon(Icons.my_location, color: accentColor, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            isPl ? 'Orientacja przestrzenna (GPS)' : 'Spatial Orientation (GPS)',
-                            style: TextStyle(color: textColor, fontSize: 15.5, fontWeight: FontWeight.bold),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: constraints.maxWidth > 140 ? constraints.maxWidth - 105 : constraints.maxWidth,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.my_location, color: accentColor, size: 20),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    isPl ? 'Orientacja przestrzenna (GPS)' : 'Spatial Orientation (GPS)',
+                                    style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Semantics(
+                            button: true,
+                            label: isPl ? 'Odśwież pozycję GPS' : 'Refresh GPS location',
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => state.useCurrentLocationAsStart(),
+                              icon: Icon(Icons.refresh, size: 16, color: accentColor),
+                              label: Text(
+                                isPl ? 'Lokalizuj' : 'Locate',
+                                style: TextStyle(color: accentColor, fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      Semantics(
-                        button: true,
-                        label: isPl ? 'Odśwież pozycję GPS' : 'Refresh GPS location',
-                        child: TextButton.icon(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () => state.useCurrentLocationAsStart(),
-                          icon: Icon(Icons.refresh, size: 16, color: accentColor),
-                          label: Text(
-                            isPl ? 'Lokalizuj' : 'Locate',
-                            style: TextStyle(color: accentColor, fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   _buildKeyValueRow(
@@ -482,9 +493,11 @@ class _MapTextAlternativeViewState extends State<MapTextAlternativeView> {
                     children: [
                       Icon(Icons.verified, color: accentColor, size: 20),
                       const SizedBox(width: 8),
-                      Text(
-                        'NavAble Kraków • WCAG 2.2 AA Certified',
-                        style: TextStyle(color: textColor, fontSize: 13.5, fontWeight: FontWeight.bold),
+                      Expanded(
+                        child: Text(
+                          'NavAble Kraków • WCAG 2.2 AA Certified',
+                          style: TextStyle(color: textColor, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),

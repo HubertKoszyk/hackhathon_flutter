@@ -177,13 +177,6 @@ void main() {
     });
 
     testWidgets('MapTextAlternativeView does not overflow with 1.35x text scale on narrow screen', (tester) async {
-      FlutterErrorDetails? caughtDetails;
-      final originalOnError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        caughtDetails = details;
-      };
-      addTearDown(() => FlutterError.onError = originalOnError);
-
       tester.view.physicalSize = const Size(360, 640);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -209,15 +202,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.pump(const Duration(seconds: 5));
-
-      if (caughtDetails != null) {
-        debugPrint('CAUGHT SUMMARY: ${caughtDetails!.summary}');
-        debugPrint('CAUGHT CONTEXT: ${caughtDetails!.context}');
-      }
-      expect(caughtDetails, isNull);
+      expect(tester.takeException(), isNull);
       expect(find.text('Tekstowa alternatywa mapy'), findsOneWidget);
       expect(find.text('Orientacja przestrzenna (GPS)'), findsOneWidget);
+
+      // Flush accessibility announcement timer
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Inputs and language selector adapt cleanly in High Contrast mode', (tester) async {
