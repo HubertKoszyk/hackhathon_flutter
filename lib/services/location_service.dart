@@ -23,12 +23,10 @@ class LocationService {
         return _fallbackKrakowLocation();
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 5),
-        ),
-      );
+      final position = await _acquirePosition();
+      if (position == null) {
+        return _fallbackKrakowLocation();
+      }
 
       final userPoint = LatLng(position.latitude, position.longitude);
       final closestPlace = _getClosestPlaceName(userPoint);
@@ -42,8 +40,46 @@ class LocationService {
         point: userPoint,
         category: 'gps',
       );
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('LocationService error: $e');
       return _fallbackKrakowLocation();
+    }
+  }
+
+  /// Na Androidzie pierwszy fix GPS (szczególnie w budynku) często trwa > 5 s.
+  /// Strategia: dokładna pozycja z dłuższym limitem → ostatnia znana → niższa dokładność (sieć/Wi‑Fi).
+  static Future<Position?> _acquirePosition() async {
+    Position? lastKnown;
+    try {
+      lastKnown = await Geolocator.getLastKnownPosition();
+    } catch (_) {}
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print('LocationService high-accuracy failed: $e');
+    }
+
+    if (lastKnown != null) return lastKnown;
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print('LocationService medium-accuracy failed: $e');
+      return null;
     }
   }
 
