@@ -8,20 +8,19 @@ class LocationService {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        // Jeśli GPS wyłączony w systemie
-        return _fallbackKrakowLocation('Lokalizacja GPS wyłączona - użyto centrum Krakowa');
+        return _fallbackKrakowLocation();
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          return _fallbackKrakowLocation('Brak uprawnień GPS - użyto punktu startowego Kraków');
+          return _fallbackKrakowLocation();
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        return _fallbackKrakowLocation('Uprawnienia GPS zablokowane - użyto punktu startowego Kraków');
+        return _fallbackKrakowLocation();
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -31,27 +30,66 @@ class LocationService {
         ),
       );
 
+      final userPoint = LatLng(position.latitude, position.longitude);
+      final closestPlace = _getClosestPlaceName(userPoint);
+
       return KrakowLocation(
         id: 'loc_my_gps',
-        namePl: 'Moja bieżąca lokalizacja (GPS)',
-        nameEn: 'My Current Location (GPS)',
-        address: 'Kraków (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})',
-        point: LatLng(position.latitude, position.longitude),
+        namePl: 'Moja lokalizacja ($closestPlace)',
+        nameEn: 'My location ($closestPlace)',
+        nameUk: 'Моє місцезнаходження ($closestPlace)',
+        address: 'Kraków, $closestPlace',
+        point: userPoint,
         category: 'gps',
       );
     } catch (_) {
-      return _fallbackKrakowLocation('Pozycja startowa Kraków');
+      return _fallbackKrakowLocation();
     }
   }
 
-  static KrakowLocation _fallbackKrakowLocation(String addressNote) {
-    return KrakowLocation(
+  static KrakowLocation _fallbackKrakowLocation() {
+    const fallbackPoint = LatLng(50.0645, 19.9430);
+    const closestPlace = 'Planty / Dworzec Główny';
+
+    return const KrakowLocation(
       id: 'loc_my_gps_fallback',
-      namePl: 'Moja lokalizacja (Centrum Krakowa)',
-      nameEn: 'My Location (Kraków Center)',
-      address: addressNote,
-      point: const LatLng(50.0645, 19.9430), // Planty / Dworzec Główny
+      namePl: 'Moja lokalizacja ($closestPlace)',
+      nameEn: 'My location ($closestPlace)',
+      nameUk: 'Моє місцезнаходження ($closestPlace)',
+      address: 'Kraków, $closestPlace',
+      point: fallbackPoint,
       category: 'gps',
     );
+  }
+
+  /// Wyznacza orientacyjną nazwę miejsca w Krakowie (nazwy własne zawsze oryginalne, nietłumaczone)
+  static String _getClosestPlaceName(LatLng point) {
+    final knownPlaces = [
+      (const LatLng(50.0668, 19.9464), 'Dworzec Główny / Galeria Krakowska'),
+      (const LatLng(50.0645, 19.9430), 'Planty / Teatr Słowackiego'),
+      (const LatLng(50.0617, 19.9373), 'Rynek Główny'),
+      (const LatLng(50.0545, 19.9354), 'Wawel'),
+      (const LatLng(50.0519, 19.9452), 'Kazimierz / Plac Nowy'),
+      (const LatLng(50.0656, 19.9416), 'Barbakan / Brama Floriańska'),
+      (const LatLng(50.0602, 19.9234), 'Muzeum Narodowe'),
+      (const LatLng(50.0664, 19.9192), 'Miasteczko AGH'),
+      (const LatLng(50.0661, 19.9597), 'Rondo Mogilskie'),
+      (const LatLng(50.0682, 19.9905), 'Tauron Arena'),
+      (const LatLng(50.0531, 19.9333), 'Bulwary Wiślane'),
+    ];
+
+    const distanceCalc = Distance();
+    double minDistance = double.infinity;
+    String best = 'Centrum Krakowa';
+
+    for (final place in knownPlaces) {
+      final d = distanceCalc.as(LengthUnit.Meter, point, place.$1);
+      if (d < minDistance) {
+        minDistance = d;
+        best = place.$2;
+      }
+    }
+
+    return best;
   }
 }

@@ -429,16 +429,26 @@ class _KrakMapViewState extends State<KrakMapView> {
                                 : kColorScheme.error,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.lightGreen,
-                              width: 2,
+                              color: kColorScheme.surface,
+                              width: 2.5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (audit.isAccessible
+                                        ? kColorScheme.inverseSurface
+                                        : kColorScheme.error)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Center(
                             child: Icon(
                               audit.isAccessible
                                   ? Icons.verified
                                   : Icons.warning_amber_rounded,
-                              color: Colors.white,
+                              color: kColorScheme.onPrimary,
                               size: 22,
                             ),
                           ),
@@ -448,14 +458,24 @@ class _KrakMapViewState extends State<KrakMapView> {
                           right: 0,
                           top: 0,
                           child: Container(
-                            padding: const EdgeInsets.all(4.0),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0F172A),
+                            padding: const EdgeInsets.all(3.5),
+                            decoration: BoxDecoration(
+                              color: kColorScheme.surface,
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: kColorScheme.primary,
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: kColorScheme.onSurface.withValues(alpha: 0.15),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.streetview,
-                              color: Color(0xFF38BDF8),
+                              color: kColorScheme.primary,
                               size: 13,
                             ),
                           ),

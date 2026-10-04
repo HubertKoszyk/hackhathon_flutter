@@ -100,10 +100,15 @@ class RoutingService {
         if (routesJson != null && routesJson.isNotEmpty) {
           final rawCoords = routesJson[0]['geometry']['coordinates'] as List;
           distance = (routesJson[0]['distance'] as num).toDouble().round();
-          duration = ((routesJson[0]['duration'] as num).toDouble() / 60).round().clamp(1, 999);
+          duration = ((routesJson[0]['duration'] as num).toDouble() / 60)
+              .round()
+              .clamp(1, 999);
 
           directPoints = rawCoords
-              .map((c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
+              .map(
+                (c) =>
+                    LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()),
+              )
               .toList();
         }
       }
@@ -149,16 +154,22 @@ class RoutingService {
     final List<LatLng> pts = [];
     for (int i = 0; i <= segments; i++) {
       final t = i / segments;
-      pts.add(LatLng(
-        a.latitude + (b.latitude - a.latitude) * t,
-        a.longitude + (b.longitude - a.longitude) * t,
-      ));
+      pts.add(
+        LatLng(
+          a.latitude + (b.latitude - a.latitude) * t,
+          a.longitude + (b.longitude - a.longitude) * t,
+        ),
+      );
     }
     return pts;
   }
 
   /// Tworzy widocznie różną trasę objazdu omijającą barierę na trasie prostej
-  static List<LatLng> _generateBypassCoordinates(List<LatLng> direct, LatLng start, LatLng end) {
+  static List<LatLng> _generateBypassCoordinates(
+    List<LatLng> direct,
+    LatLng start,
+    LatLng end,
+  ) {
     if (direct.length < 2) return direct;
 
     final List<LatLng> bypass = [];
@@ -178,10 +189,12 @@ class RoutingService {
       } else {
         // Płynny łuk wokół środka trasy (gdzie leży bariera)
         final factor = math.sin((i / (direct.length - 1)) * math.pi);
-        bypass.add(LatLng(
-          direct[i].latitude + offsetLat * factor,
-          direct[i].longitude + offsetLng * factor,
-        ));
+        bypass.add(
+          LatLng(
+            direct[i].latitude + offsetLat * factor,
+            direct[i].longitude + offsetLng * factor,
+          ),
+        );
       }
     }
     return bypass;
@@ -214,12 +227,18 @@ class RoutingService {
       aiVerdictPl: analysis.aiVerdictPl,
       aiVerdictEn: analysis.aiVerdictEn,
       bypassPhotoUrl: analysis.bypassPhotoUrl,
-      bypassTitlePl: 'Zweryfikowany objazd KrakAccess',
-      bypassTitleEn: 'KrakAccess Verified Bypass',
+      bypassTitlePl: 'Zweryfikowany objazd NavAble',
+      bypassTitleEn: 'NavAble Verified Bypass',
       bypassDescriptionPl: analysis.bypassReasonPl,
       bypassDescriptionEn: analysis.bypassReasonEn,
-      profileImpactPl: _getProfileImpactPl(profile, analysis.stairsCount > 0 ? 'schody' : 'krawężnik'),
-      profileImpactEn: _getProfileImpactEn(profile, analysis.stairsCount > 0 ? 'stairs' : 'curb'),
+      profileImpactPl: _getProfileImpactPl(
+        profile,
+        analysis.stairsCount > 0 ? 'schody' : 'krawężnik',
+      ),
+      profileImpactEn: _getProfileImpactEn(
+        profile,
+        analysis.stairsCount > 0 ? 'stairs' : 'curb',
+      ),
       isLiveGeoPhoto: analysis.isLivePhoto,
       photoSourceAttribution: analysis.photoAttribution,
       photoTitle: analysis.photoTitle,
@@ -227,7 +246,7 @@ class RoutingService {
 
     final accessibleAudit = AccessibilityAudit(
       id: 'aud_dyn_acc_${DateTime.now().millisecondsSinceEpoch}',
-      checkpointName: 'Płaski trakt KrakAccess ($destName)',
+      checkpointName: 'Płaska droga ($destName)',
       location: bypassPoints[bypassPoints.length ~/ 2],
       photoUrl: analysis.bypassPhotoUrl,
       isAccessible: true,
@@ -240,9 +259,10 @@ class RoutingService {
       aiVerdictPl: profile == MobilityProfile.wheelchair
           ? 'BEZPIECZNE DLA WÓZKA: Płaski trakt pieszy bez schodów, szerokość >2.2 m, 100% zjazdów zlicowanych 0 cm.'
           : (profile == MobilityProfile.cane
-              ? 'BEZPIECZNE DLA SENIORA: Płaski odcinek z ławkami co 120 m i łagodnym spadkiem <2.5%.'
-              : 'BEZPIECZNE DLA WÓZKA DZIECIĘCEGO: Szeroki chodnik bez drgań – ochrona snu dziecka.'),
-      aiVerdictEn: 'SAFE: Flat surface, dropped curbs, excellent accessibility.',
+                ? 'BEZPIECZNE DLA SENIORA: Płaski odcinek z ławkami co 120 m i łagodnym spadkiem <2.5%.'
+                : 'BEZPIECZNE DLA WÓZKA DZIECIĘCEGO: Szeroki chodnik bez drgań – ochrona snu dziecka.'),
+      aiVerdictEn:
+          'SAFE: Flat surface, dropped curbs, excellent accessibility.',
       bypassPhotoUrl: analysis.photoUrl,
       bypassTitlePl: 'Ominięta bariera na trasie bezpośredniej',
       bypassTitleEn: 'Bypassed barrier on direct route',
@@ -251,18 +271,19 @@ class RoutingService {
       profileImpactPl: 'Dostosowane do wybranego profilu mobilności.',
       profileImpactEn: 'Adapted for the selected mobility profile.',
       isLiveGeoPhoto: false,
-      photoSourceAttribution: 'KrakAccess Verified Bypass',
-      photoTitle: 'Trasa bez barier KrakAccess',
+      photoSourceAttribution: 'NavAble Verified Bypass',
+      photoTitle: 'Trasa bez barier NavAble',
     );
 
-    final bypassDistance = distanceMeters + (distanceMeters * 0.08).round() + 50;
+    final bypassDistance =
+        distanceMeters + (distanceMeters * 0.08).round() + 50;
     final bypassDuration = durationMinutes + 1;
 
     // TRASA ZIELONA (KrakAccess - Omija barierę)
     final accessibleRoute = RouteModel(
       id: 'route_dyn_acc',
-      titlePl: 'Trasa KrakAccess (Obejście barier)',
-      titleEn: 'KrakAccess Route (Barrier Bypass)',
+      titlePl: 'Trasa NavAble (Obejście barier)',
+      titleEn: 'NavAble Route (Barrier Bypass)',
       type: RouteType.accessible,
       polylineColor: const Color(0xFF10B981),
       distanceMeters: bypassDistance,
@@ -337,7 +358,10 @@ class RoutingService {
     return [accessibleRoute, standardRoute];
   }
 
-  static List<RouteModel> _getDworzecRynekRoutes(MobilityProfile profile, {bool reversed = false}) {
+  static List<RouteModel> _getDworzecRynekRoutes(
+    MobilityProfile profile, {
+    bool reversed = false,
+  }) {
     // 1. Trasa standardowa (CZERWONA - Tunel ze schodami pod Lubicz + kocie łby na Floriańskiej)
     final standardAudits = [
       AccessibilityAudit(
@@ -346,23 +370,31 @@ class RoutingService {
         location: const LatLng(50.0652, 19.9442),
         photoUrl: 'assets/streetview/lubicz_barrier.jpg',
         isAccessible: false,
-        score: profile == MobilityProfile.wheelchair ? 20 : (profile == MobilityProfile.cane ? 45 : 30),
+        score: profile == MobilityProfile.wheelchair
+            ? 20
+            : (profile == MobilityProfile.cane ? 45 : 30),
         stairsDetected: true,
         stairsCount: 24,
         curbStatus: 'Brak rampy / schody strome',
         surfaceType: 'Schody betonowe (24 stopnie w dół i w górę)',
-        hazards: const ['24 stopnie w dół i w górę', 'Zepsuta winda platformowa', 'Brak pochylni'],
+        hazards: const [
+          '24 stopnie w dół i w górę',
+          'Zepsuta winda platformowa',
+          'Brak pochylni',
+        ],
         aiVerdictPl: profile == MobilityProfile.wheelchair
             ? 'KRYTYCZNA BARIERA DLA WÓZKA: 24 stopnie bez windy. Przejazd niemożliwy bez asysty 2 osób.'
             : (profile == MobilityProfile.cane
-                ? 'ZAGROŻENIE DLA SENIORA: Śliskie stopnie i strome zejście – wysokie ryzyko upadku.'
-                : 'UTRUDNIENIE: Konieczność zniesienia wózka dziecięcego ze schodów.'),
+                  ? 'ZAGROŻENIE DLA SENIORA: Śliskie stopnie i strome zejście – wysokie ryzyko upadku.'
+                  : 'UTRUDNIENIE: Konieczność zniesienia wózka dziecięcego ze schodów.'),
         aiVerdictEn: 'CRITICAL BARRIER: 24 steps without functioning elevator.',
         bypassPhotoUrl: 'assets/streetview/planty_bypass.jpg',
-        bypassTitlePl: 'Obejście KrakAccess (Naziemne Planty)',
-        bypassTitleEn: 'KrakAccess Bypass (Ground Crossing)',
-        bypassDescriptionPl: 'Skierowano przez przejście naziemne z sygnalizacją dźwiękową i rampą 0cm.',
-        bypassDescriptionEn: 'Rerouted through ground level crossing with 0cm ramp.',
+        bypassTitlePl: 'Obejście NavAble (Naziemne Planty)',
+        bypassTitleEn: 'NavAble Bypass (Ground Crossing)',
+        bypassDescriptionPl:
+            'Skierowano przez przejście naziemne z sygnalizacją dźwiękową i rampą 0cm.',
+        bypassDescriptionEn:
+            'Rerouted through ground level crossing with 0cm ramp.',
         profileImpactPl: _getProfileImpactPl(profile, 'schody'),
         profileImpactEn: _getProfileImpactEn(profile, 'stairs'),
       ),
@@ -372,22 +404,30 @@ class RoutingService {
         location: const LatLng(50.0645, 19.9405),
         photoUrl: 'assets/streetview/florianska_barrier.jpg',
         isAccessible: false,
-        score: profile == MobilityProfile.wheelchair ? 35 : (profile == MobilityProfile.cane ? 60 : 45),
+        score: profile == MobilityProfile.wheelchair
+            ? 35
+            : (profile == MobilityProfile.cane ? 60 : 45),
         stairsDetected: false,
         stairsCount: 0,
         curbStatus: 'Krawężnik 12 cm',
         surfaceType: 'Zabytkowa kostka bazaltowa (kocie łby)',
-        hazards: const ['Silne drgania', 'Głębokie spoiny >3cm', 'Ryzyko zaklinowania kółek'],
+        hazards: const [
+          'Silne drgania',
+          'Głębokie spoiny >3cm',
+          'Ryzyko zaklinowania kółek',
+        ],
         aiVerdictPl: profile == MobilityProfile.wheelchair
             ? 'TRUDNA NAWIERZCHNIA: Nierówny bruk historyczny powoduje niebezpieczne wibracje i blokowanie kółek wózka.'
             : (profile == MobilityProfile.cane
-                ? 'Nierówna kostka: Utrudnione oparcie laski, ryzyko skręcenia kostki.'
-                : 'Uciążliwe wstrząsy dla śpiącego dziecka w wózku.'),
-        aiVerdictEn: 'Uneven cobblestone causing intense vibrations and trip hazard.',
+                  ? 'Nierówna kostka: Utrudnione oparcie laski, ryzyko skręcenia kostki.'
+                  : 'Uciążliwe wstrząsy dla śpiącego dziecka w wózku.'),
+        aiVerdictEn:
+            'Uneven cobblestone causing intense vibrations and trip hazard.',
         bypassPhotoUrl: 'assets/streetview/slawkowska_bypass.jpg',
         bypassTitlePl: 'Objazd ul. Szpitalną',
         bypassTitleEn: 'Bypass via Szpitalna St.',
-        bypassDescriptionPl: 'Gładkie płyty granitowe po rewitalizacji bez szwów.',
+        bypassDescriptionPl:
+            'Gładkie płyty granitowe po rewitalizacji bez szwów.',
         bypassDescriptionEn: 'Smooth revitalized granite slabs.',
       ),
     ];
@@ -413,19 +453,30 @@ class RoutingService {
       polylineColor: const Color(0xFFEF4444),
       distanceMeters: 850,
       durationMinutes: 12,
-      accessibilityScore: profile == MobilityProfile.wheelchair ? 25 : (profile == MobilityProfile.cane ? 50 : 36),
+      accessibilityScore: profile == MobilityProfile.wheelchair
+          ? 25
+          : (profile == MobilityProfile.cane ? 50 : 36),
       stairsCount: 24,
       stairsAvoided: 0,
-      surfaceSummaryPl: 'Schody (24 stopnie w tunelu), kocie łby na Floriańskiej',
+      surfaceSummaryPl:
+          'Schody (24 stopnie w tunelu), kocie łby na Floriańskiej',
       surfaceSummaryEn: 'Stairs (24 underground steps), rough cobblestone',
       coordinates: reversed ? stdCoords.reversed.toList() : stdCoords,
       audits: standardAudits,
-      profileHighlightsPl: const ['Krótsza o 70 m', 'Zawiera 24 strome stopnie bez windy'],
-      profileHighlightsEn: const ['70 m shorter', 'Contains 24 steep steps without lift'],
+      profileHighlightsPl: const [
+        'Krótsza o 70 m',
+        'Zawiera 24 strome stopnie bez windy',
+      ],
+      profileHighlightsEn: const [
+        '70 m shorter',
+        'Contains 24 steep steps without lift',
+      ],
       detectedBarrierPl: 'Przejście podziemne Lubicz: 24 stopnie bez windy',
       detectedBarrierEn: 'Lubicz underpass: 24 steps without elevator',
-      bypassReasonPl: 'Ominięto schody naziemnym przejściem przez Planty (+70 m, 0 stopni)',
-      bypassReasonEn: 'Bypassed stairs via flat ground crossing (+70 m, 0 stairs)',
+      bypassReasonPl:
+          'Ominięto schody naziemnym przejściem przez Planty (+70 m, 0 stopni)',
+      bypassReasonEn:
+          'Bypassed stairs via flat ground crossing (+70 m, 0 stairs)',
     );
 
     // 2. Trasa dostępna KrakAccess (ZIELONA - Naziemne Planty + ul. Szpitalna)
@@ -436,7 +487,9 @@ class RoutingService {
         location: const LatLng(50.0648, 19.9451),
         photoUrl: 'assets/streetview/planty_bypass.jpg',
         isAccessible: true,
-        score: profile == MobilityProfile.wheelchair ? 98 : (profile == MobilityProfile.cane ? 96 : 97),
+        score: profile == MobilityProfile.wheelchair
+            ? 98
+            : (profile == MobilityProfile.cane ? 96 : 97),
         stairsDetected: false,
         stairsCount: 0,
         curbStatus: 'Zjazd zlicowany z jezdnią 0 cm',
@@ -445,14 +498,16 @@ class RoutingService {
         aiVerdictPl: profile == MobilityProfile.wheelchair
             ? 'OPTYMALNE: Całkowicie płaski przejazd przez aleję Plant, 0 stopni, szerokie pasy z rampami.'
             : (profile == MobilityProfile.cane
-                ? 'KOMFORTOWE: Płaski trakt z ławeczkami w cieniu drzew na Plantach, brak stopni.'
-                : 'IDEALNE: Szerokie, równe przejście dla wózka dziecięcego.'),
+                  ? 'KOMFORTOWE: Płaski trakt z ławeczkami w cieniu drzew na Plantach, brak stopni.'
+                  : 'IDEALNE: Szerokie, równe przejście dla wózka dziecięcego.'),
         aiVerdictEn: 'OPTIMAL: Fully accessible ground crossing, zero steps.',
         bypassPhotoUrl: 'assets/streetview/lubicz_barrier.jpg',
         bypassTitlePl: 'Ominięte schody w tunelu Lubicz (24 stopnie)',
         bypassTitleEn: 'Bypassed 24 steps in Lubicz underpass',
-        bypassDescriptionPl: 'Audyt AI potwierdził obecność obniżonych krawężników i brak barier.',
-        bypassDescriptionEn: 'AI audit verified dropped curbs and zero obstacles.',
+        bypassDescriptionPl:
+            'Audyt AI potwierdził obecność obniżonych krawężników i brak barier.',
+        bypassDescriptionEn:
+            'AI audit verified dropped curbs and zero obstacles.',
       ),
       AccessibilityAudit(
         id: 'aud_acc_2',
@@ -466,13 +521,16 @@ class RoutingService {
         curbStatus: 'Łagodny najazd rampowy 0-1cm',
         surfaceType: 'Gładkie płyty chodnikowe bezszwowe',
         hazards: const [],
-        aiVerdictPl: 'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
-        aiVerdictEn: 'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
+        aiVerdictPl:
+            'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
+        aiVerdictEn:
+            'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
         bypassPhotoUrl: 'assets/streetview/florianska_barrier.jpg',
         bypassTitlePl: 'Ominięty zabytkowy bruk na Floriańskiej',
         bypassTitleEn: 'Bypassed cobblestones on Floriańska',
         bypassDescriptionPl: 'Pomyślnie ominięto kocie łby i wstrząsy.',
-        bypassDescriptionEn: 'Successfully avoided cobblestones and vibrations.',
+        bypassDescriptionEn:
+            'Successfully avoided cobblestones and vibrations.',
       ),
     ];
 
@@ -488,34 +546,44 @@ class RoutingService {
     final accessibleRoute = RouteModel(
       id: 'route_accessible_dworzec',
       titlePl: reversed
-          ? 'Trasa KrakAccess (ul. Szpitalna i Płaskie Planty)'
-          : 'Trasa KrakAccess (Płaskie Planty i ul. Szpitalna)',
+          ? 'Trasa NavAble (ul. Szpitalna i Płaskie Planty)'
+          : 'Trasa NavAble (Płaskie Planty i ul. Szpitalna)',
       titleEn: reversed
-          ? 'KrakAccess Route (Szpitalna St. & Planty)'
-          : 'KrakAccess Route (Planty & Szpitalna St.)',
+          ? 'NavAble Route (Szpitalna St. & Planty)'
+          : 'NavAble Route (Planty & Szpitalna St.)',
       type: RouteType.accessible,
       polylineColor: const Color(0xFF10B981),
       distanceMeters: 920,
       durationMinutes: 13,
-      accessibilityScore: profile == MobilityProfile.wheelchair ? 98 : (profile == MobilityProfile.cane ? 96 : 97),
+      accessibilityScore: profile == MobilityProfile.wheelchair
+          ? 98
+          : (profile == MobilityProfile.cane ? 96 : 97),
       stairsCount: 0,
       stairsAvoided: 24,
-      surfaceSummaryPl: 'Gładkie płyty szlifowane, 0 schodów, 100% zjazdów rampowych',
+      surfaceSummaryPl:
+          'Gładkie płyty szlifowane, 0 schodów, 100% zjazdów rampowych',
       surfaceSummaryEn: 'Smooth granite slabs, 0 stairs, 100% dropped curbs',
       coordinates: reversed ? accCoords.reversed.toList() : accCoords,
       audits: accessibleAudits,
       profileHighlightsPl: _getDworzecHighlightsPl(profile),
       profileHighlightsEn: _getDworzecHighlightsEn(profile),
-      detectedBarrierPl: 'Przejście podziemne: 24 stopnie w dół i w górę bez windy',
+      detectedBarrierPl:
+          'Przejście podziemne: 24 stopnie w dół i w górę bez windy',
       detectedBarrierEn: 'Underpass: 24 steps without functioning elevator',
-      bypassReasonPl: 'Ominięto schody naziemnym przejściem przez Planty (+70 m, 0 stopni)',
-      bypassReasonEn: 'Bypassed stairs via flat Planty crossing (+70 m, 0 stairs)',
+      bypassReasonPl:
+          'Ominięto schody naziemnym przejściem przez Planty (+70 m, 0 stopni)',
+      bypassReasonEn:
+          'Bypassed stairs via flat Planty crossing (+70 m, 0 stairs)',
     );
 
     // GTFS Komunikacja Miejska dla trasy Dworzec - Rynek (Linie 18, 4, 14, 20)
     final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
-      start: reversed ? const LatLng(50.0617, 19.9373) : const LatLng(50.0668, 19.9460),
-      end: reversed ? const LatLng(50.0668, 19.9460) : const LatLng(50.0617, 19.9373),
+      start: reversed
+          ? const LatLng(50.0617, 19.9373)
+          : const LatLng(50.0668, 19.9460),
+      end: reversed
+          ? const LatLng(50.0668, 19.9460)
+          : const LatLng(50.0617, 19.9373),
       profile: profile,
       walkingDistanceMeters: 920,
       walkingDurationMinutes: 13,
@@ -529,7 +597,10 @@ class RoutingService {
     return [accessibleRoute, standardRoute];
   }
 
-  static List<RouteModel> _getWawelKazimierzRoutes(MobilityProfile profile, {bool reversed = false}) {
+  static List<RouteModel> _getWawelKazimierzRoutes(
+    MobilityProfile profile, {
+    bool reversed = false,
+  }) {
     final stdCoords = const [
       LatLng(50.0545, 19.9354), // Wawel Podzamcze
       LatLng(50.0538, 19.9372), // Schody kamienne
@@ -549,7 +620,9 @@ class RoutingService {
       polylineColor: const Color(0xFFEF4444),
       distanceMeters: 1100,
       durationMinutes: 15,
-      accessibilityScore: profile == MobilityProfile.wheelchair ? 22 : (profile == MobilityProfile.cane ? 35 : 40),
+      accessibilityScore: profile == MobilityProfile.wheelchair
+          ? 22
+          : (profile == MobilityProfile.cane ? 35 : 40),
       stairsCount: 18,
       stairsAvoided: 0,
       surfaceSummaryPl: 'Strome stopnie kamienne (18 schodów), śliski wapień',
@@ -568,21 +641,32 @@ class RoutingService {
           curbStatus: 'Strome schody bez poręczy',
           surfaceType: 'Wapień historyczny śliski',
           hazards: const ['18 stopni', 'Brak pochylni', 'Spadek terenu 11%'],
-          aiVerdictPl: 'KRYTYCZNA BARIERA: Schody kamienne o nachyleniu 11% bez pochylni.',
+          aiVerdictPl:
+              'KRYTYCZNA BARIERA: Schody kamienne o nachyleniu 11% bez pochylni.',
           aiVerdictEn: 'CRITICAL BARRIER: Steep stone steps with 11% gradient.',
           bypassPhotoUrl: 'assets/streetview/bernardynska_bypass.jpg',
           bypassTitlePl: 'Płaski zjazd ul. Bernardyńską',
           bypassTitleEn: 'Flat ramp via Bernardyńska St.',
-          bypassDescriptionPl: 'Łagodne nachylenie <3.5%, gładki asfalt i bezpieczne barierki.',
+          bypassDescriptionPl:
+              'Łagodne nachylenie <3.5%, gładki asfalt i bezpieczne barierki.',
           bypassDescriptionEn: 'Gentle slope <3.5%, smooth asphalt.',
         ),
       ],
-      profileHighlightsPl: const ['Krótsza o 150m', 'Strome schody kamienne (18 stopni ze Wzgórza)'],
-      profileHighlightsEn: const ['150m shorter', 'Steep stone steps (18 steps from Wawel)'],
-      detectedBarrierPl: 'Strome zejście z Wawelu: 18 kamiennych stopni bez rampy',
+      profileHighlightsPl: const [
+        'Krótsza o 150m',
+        'Strome schody kamienne (18 stopni ze Wzgórza)',
+      ],
+      profileHighlightsEn: const [
+        '150m shorter',
+        'Steep stone steps (18 steps from Wawel)',
+      ],
+      detectedBarrierPl:
+          'Strome zejście z Wawelu: 18 kamiennych stopni bez rampy',
       detectedBarrierEn: 'Steep Wawel descent: 18 stone steps without ramp',
-      bypassReasonPl: 'Skierowano łagodnym traktem ul. Bernardyńskiej (+150m, 0 stopni)',
-      bypassReasonEn: 'Rerouted through gentle Bernardyńska slope (+150m, 0 stairs)',
+      bypassReasonPl:
+          'Skierowano łagodnym traktem ul. Bernardyńskiej (+150m, 0 stopni)',
+      bypassReasonEn:
+          'Rerouted through gentle Bernardyńska slope (+150m, 0 stairs)',
     );
 
     final accCoords = const [
@@ -596,16 +680,18 @@ class RoutingService {
     final accessibleRoute = RouteModel(
       id: 'route_acc_wawel',
       titlePl: reversed
-          ? 'Trasa KrakAccess (Płaski podjazd Dietla i Bernardyńską)'
-          : 'Trasa KrakAccess (Płaski zjazd ul. Bernardyńską i Dietla)',
+          ? 'Trasa NavAble (Płaski podjazd Dietla i Bernardyńską)'
+          : 'Trasa NavAble (Płaski zjazd ul. Bernardyńską i Dietla)',
       titleEn: reversed
-          ? 'KrakAccess Route (Dietla & Bernardyńska)'
-          : 'KrakAccess Route (Bernardyńska & Dietla)',
+          ? 'NavAble Route (Dietla & Bernardyńska)'
+          : 'NavAble Route (Bernardyńska & Dietla)',
       type: RouteType.accessible,
       polylineColor: const Color(0xFF10B981),
       distanceMeters: 1250,
       durationMinutes: 17,
-      accessibilityScore: profile == MobilityProfile.wheelchair ? 95 : (profile == MobilityProfile.cane ? 93 : 95),
+      accessibilityScore: profile == MobilityProfile.wheelchair
+          ? 95
+          : (profile == MobilityProfile.cane ? 93 : 95),
       stairsCount: 0,
       stairsAvoided: 18,
       surfaceSummaryPl: 'Łagodne nachylenie <3.5%, gładki asfalt, 0 schodów',
@@ -624,8 +710,10 @@ class RoutingService {
           curbStatus: 'Zjazd wózkowy 0cm',
           surfaceType: 'Asfalt gładki',
           hazards: [],
-          aiVerdictPl: 'BEZPIECZNE: Płaski trakt pieszy o nachyleniu 3.2%, w pełni zgodny z normami WCAG.',
-          aiVerdictEn: 'SAFE: Flat pedestrian path with 3.2% slope, fully WCAG compliant.',
+          aiVerdictPl:
+              'BEZPIECZNE: Płaski trakt pieszy o nachyleniu 3.2%, w pełni zgodny z normami WCAG.',
+          aiVerdictEn:
+              'SAFE: Flat pedestrian path with 3.2% slope, fully WCAG compliant.',
           bypassPhotoUrl: 'assets/streetview/wawel_stairs_barrier.jpg',
           bypassTitlePl: 'Ominięte 18 stopni ze Wzgórza Wawelskiego',
           bypassTitleEn: 'Bypassed 18 steep steps from Wawel Hill',
@@ -633,16 +721,23 @@ class RoutingService {
       ],
       profileHighlightsPl: _getWawelHighlightsPl(profile),
       profileHighlightsEn: _getWawelHighlightsEn(profile),
-      detectedBarrierPl: 'Strome zejście z Wawelu: 18 kamiennych stopni bez rampy',
+      detectedBarrierPl:
+          'Strome zejście z Wawelu: 18 kamiennych stopni bez rampy',
       detectedBarrierEn: 'Steep Wawel descent: 18 stone steps without ramp',
-      bypassReasonPl: 'Skierowano łagodnym traktem ul. Bernardyńskiej (+150m, 0 stopni)',
-      bypassReasonEn: 'Rerouted through gentle Bernardyńska slope (+150m, 0 stairs)',
+      bypassReasonPl:
+          'Skierowano łagodnym traktem ul. Bernardyńskiej (+150m, 0 stopni)',
+      bypassReasonEn:
+          'Rerouted through gentle Bernardyńska slope (+150m, 0 stairs)',
     );
 
     // GTFS Komunikacja Miejska dla trasy Wawel - Kazimierz (Linie 8, 18)
     final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
-      start: reversed ? const LatLng(50.0519, 19.9452) : const LatLng(50.0545, 19.9354),
-      end: reversed ? const LatLng(50.0545, 19.9354) : const LatLng(50.0519, 19.9452),
+      start: reversed
+          ? const LatLng(50.0519, 19.9452)
+          : const LatLng(50.0545, 19.9354),
+      end: reversed
+          ? const LatLng(50.0545, 19.9354)
+          : const LatLng(50.0519, 19.9452),
       profile: profile,
       walkingDistanceMeters: 1250,
       walkingDurationMinutes: 17,
@@ -656,7 +751,10 @@ class RoutingService {
     return [accessibleRoute, standardRoute];
   }
 
-  static List<RouteModel> _getBarbakanRynekRoutes(MobilityProfile profile, {bool reversed = false}) {
+  static List<RouteModel> _getBarbakanRynekRoutes(
+    MobilityProfile profile, {
+    bool reversed = false,
+  }) {
     final accCoords = const [
       LatLng(50.0656, 19.9416),
       LatLng(50.0645, 19.9395),
@@ -667,11 +765,11 @@ class RoutingService {
     final accessibleRoute = RouteModel(
       id: 'route_acc_barbakan',
       titlePl: reversed
-          ? 'Trasa KrakAccess (ul. Sławkowska ➔ Barbakan)'
-          : 'Trasa KrakAccess (ul. Sławkowska - gładka)',
+          ? 'Trasa NavAble (ul. Sławkowska ➔ Barbakan)'
+          : 'Trasa NavAble (ul. Sławkowska - gładka)',
       titleEn: reversed
-          ? 'KrakAccess Route (Sławkowska St. ➔ Barbican)'
-          : 'KrakAccess Route (Sławkowska St. - smooth)',
+          ? 'NavAble Route (Sławkowska St. ➔ Barbican)'
+          : 'NavAble Route (Sławkowska St. - smooth)',
       type: RouteType.accessible,
       polylineColor: const Color(0xFF10B981),
       distanceMeters: 480,
@@ -695,21 +793,28 @@ class RoutingService {
           curbStatus: 'Zjazdy zlicowane 0-1 cm',
           surfaceType: 'Gładkie płyty granitowe bezszwowe',
           hazards: const [],
-          aiVerdictPl: 'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
-          aiVerdictEn: 'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
+          aiVerdictPl:
+              'OPTYMALNE: Nowa nawierzchnia płytowa po rewitalizacji, brak wstrząsów, szerokość >2.4 m.',
+          aiVerdictEn:
+              'OPTIMAL: Smooth paving slabs, width >2.4m, safe for all mobility types.',
           bypassPhotoUrl: 'assets/streetview/florianska_barrier.jpg',
           bypassTitlePl: 'Ominięty zabytkowy bruk na Floriańskiej',
           bypassTitleEn: 'Bypassed Floriańska cobblestones',
-          bypassDescriptionPl: 'Pomyślnie ominięto kocie łby i niebezpieczne wstrząsy.',
-          bypassDescriptionEn: 'Successfully avoided cobblestones and vibrations.',
+          bypassDescriptionPl:
+              'Pomyślnie ominięto kocie łby i niebezpieczne wstrząsy.',
+          bypassDescriptionEn:
+              'Successfully avoided cobblestones and vibrations.',
         ),
       ],
       profileHighlightsPl: _getBarbakanHighlightsPl(profile),
       profileHighlightsEn: _getBarbakanHighlightsEn(profile),
-      detectedBarrierPl: 'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
+      detectedBarrierPl:
+          'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
       detectedBarrierEn: 'Historic uneven cobblestones on Floriańska St.',
-      bypassReasonPl: 'Skierowano równoległą ul. Sławkowską o gładkich płytach granitowych',
-      bypassReasonEn: 'Rerouted via parallel Sławkowska St. with smooth granite slabs',
+      bypassReasonPl:
+          'Skierowano równoległą ul. Sławkowską o gładkich płytach granitowych',
+      bypassReasonEn:
+          'Rerouted via parallel Sławkowska St. with smooth granite slabs',
     );
 
     final stdCoords = const [
@@ -739,41 +844,62 @@ class RoutingService {
       audits: [
         AccessibilityAudit(
           id: 'aud_barbakan_std',
-          checkpointName: 'Wlot ul. Floriańskiej (Brama Floriańska / kocie łby)',
+          checkpointName:
+              'Wlot ul. Floriańskiej (Brama Floriańska / kocie łby)',
           location: const LatLng(50.0645, 19.9405),
           photoUrl: 'assets/streetview/florianska_barrier.jpg',
           isAccessible: false,
-          score: profile == MobilityProfile.wheelchair ? 35 : (profile == MobilityProfile.cane ? 55 : 45),
+          score: profile == MobilityProfile.wheelchair
+              ? 35
+              : (profile == MobilityProfile.cane ? 55 : 45),
           stairsDetected: false,
           stairsCount: 0,
           curbStatus: 'Krawężnik 12-14 cm',
           surfaceType: 'Zabytkowy nierówny bruk (kocie łby)',
-          hazards: const ['Silne wstrząsy i drgania', 'Głębokie spoiny >3 cm', 'Krawężnik 14 cm'],
+          hazards: const [
+            'Silne wstrząsy i drgania',
+            'Głębokie spoiny >3 cm',
+            'Krawężnik 14 cm',
+          ],
           aiVerdictPl: profile == MobilityProfile.wheelchair
               ? 'KRYTYCZNE DRGANIA: Historyczny bruk na Floriańskiej grozi wywróceniem wózka. Zalecany objazd ul. Sławkowską.'
               : 'UTRUDNIENIE: Nierówna nawierzchnia i wysokie uskoki krawężników.',
-          aiVerdictEn: 'SEVERE VIBRATIONS: Historic cobblestones. Use Sławkowska bypass.',
+          aiVerdictEn:
+              'SEVERE VIBRATIONS: Historic cobblestones. Use Sławkowska bypass.',
           bypassPhotoUrl: 'assets/streetview/slawkowska_bypass.jpg',
           bypassTitlePl: 'Objazd ul. Sławkowską (Gładkie płyty)',
           bypassTitleEn: 'Bypass via Sławkowska St.',
-          bypassDescriptionPl: 'Gładkie płyty granitowe po rewitalizacji bez szwów.',
+          bypassDescriptionPl:
+              'Gładkie płyty granitowe po rewitalizacji bez szwów.',
           bypassDescriptionEn: 'Smooth revitalized granite slabs.',
           profileImpactPl: _getProfileImpactPl(profile, 'krawężnik'),
           profileImpactEn: _getProfileImpactEn(profile, 'curb'),
         ),
       ],
-      profileHighlightsPl: const ['Krótsza o 30m', 'Mocne drgania nawierzchni (kocie łby na Floriańskiej)'],
-      profileHighlightsEn: const ['30m shorter', 'Severe vibrations (cobblestones on Floriańska)'],
-      detectedBarrierPl: 'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
+      profileHighlightsPl: const [
+        'Krótsza o 30m',
+        'Mocne drgania nawierzchni (kocie łby na Floriańskiej)',
+      ],
+      profileHighlightsEn: const [
+        '30m shorter',
+        'Severe vibrations (cobblestones on Floriańska)',
+      ],
+      detectedBarrierPl:
+          'Zabytkowy nierówny bruk na ul. Floriańskiej (kocie łby)',
       detectedBarrierEn: 'Historic uneven cobblestones on Floriańska St.',
-      bypassReasonPl: 'Zalecany objazd ul. Sławkowską o gładkich płytach szlifowanych',
+      bypassReasonPl:
+          'Zalecany objazd ul. Sławkowską o gładkich płytach szlifowanych',
       bypassReasonEn: 'Bypass recommended via Sławkowska St.',
     );
 
     // GTFS Komunikacja Miejska dla trasy Barbakan - Sukiennice (Linie 4, 14, 20)
     final transitRoute = GtfsTransitService.calculateFastestTransitRoute(
-      start: reversed ? const LatLng(50.0617, 19.9373) : const LatLng(50.0656, 19.9416),
-      end: reversed ? const LatLng(50.0656, 19.9416) : const LatLng(50.0617, 19.9373),
+      start: reversed
+          ? const LatLng(50.0617, 19.9373)
+          : const LatLng(50.0656, 19.9416),
+      end: reversed
+          ? const LatLng(50.0656, 19.9416)
+          : const LatLng(50.0617, 19.9373),
       profile: profile,
       walkingDistanceMeters: 450,
       walkingDurationMinutes: 6,

@@ -4,6 +4,7 @@ class KrakowLocation {
   final String id;
   final String namePl;
   final String nameEn;
+  final String? nameUk;
   final String address;
   final LatLng point;
   final String category; // 'transport', 'historic', 'culture', 'park'
@@ -12,10 +13,21 @@ class KrakowLocation {
     required this.id,
     required this.namePl,
     required this.nameEn,
+    this.nameUk,
     required this.address,
     required this.point,
     required this.category,
   });
+
+  String localizedName(String lang) {
+    if (category == 'gps') {
+      if (lang == 'uk') return nameUk ?? namePl;
+      if (lang == 'en') return nameEn;
+      return namePl;
+    }
+    // Nazwy własne w Krakowie pozostają zawsze oryginalne w języku polskim
+    return namePl;
+  }
 }
 
 class KrakowLocationsDatabase {

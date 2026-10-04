@@ -4,6 +4,8 @@ var kColorScheme = const ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0048FF),
   onPrimary: Color.fromARGB(255, 255, 255, 255),
+  primaryContainer: Color(0xFFEFF3FF),
+  onPrimaryContainer: Color(0xFF0048FF),
   secondary: Color(0xFF336DFF),
   onSecondary: Color.fromARGB(255, 255, 254, 254),
   tertiary: Color(0xFF003ACC),
@@ -13,6 +15,7 @@ var kColorScheme = const ColorScheme(
   inverseSurface: Color(0xFF37DD00),
   surface: Color.fromARGB(255, 255, 255, 255),
   onSurface: Color.fromARGB(255, 25, 25, 25),
+  outline: Color(0xFFC7D7FE),
 );
 
 var kColorGrayScheme = const ColorScheme(
@@ -35,60 +38,53 @@ ThemeData materialLightTheme = ThemeData(
   colorScheme: kColorScheme,
   unselectedWidgetColor: const Color.fromARGB(255, 0, 0, 0),
   scaffoldBackgroundColor: const Color.fromARGB(255, 255, 255, 255),
-  //Set text styling
+  // //Set text styling
   fontFamily: 'InclusiveSans',
   textTheme: const TextTheme(
     displayLarge: TextStyle(
       fontFamily: 'PlusJakartaSans',
       fontSize: 32.0,
-      height: 40.0,
       fontWeight: FontWeight.w700,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     displayMedium: TextStyle(
       fontFamily: 'PlusJakartaSans',
       fontSize: 28.0,
-      height: 32.0,
       fontWeight: FontWeight.w700,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     displaySmall: TextStyle(
       fontFamily: 'PlusJakartaSans',
       fontSize: 20.0,
-      height: 24.0,
       fontWeight: FontWeight.w700,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     bodyLarge: TextStyle(
       fontFamily: 'InclusiveSans',
       fontSize: 20.0,
-      height: 24.0,
       fontWeight: FontWeight.w500,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     bodyMedium: TextStyle(
       fontFamily: 'InclusiveSans',
       fontSize: 16.0,
-      height: 20.0,
       fontWeight: FontWeight.w500,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     bodySmall: TextStyle(
       fontFamily: 'InclusiveSans',
       fontSize: 14.0,
-      height: 16.0,
       fontWeight: FontWeight.w500,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
     labelMedium: TextStyle(
       fontFamily: 'InclusiveSans',
       fontSize: 12.0,
-      height: 12.0,
       fontWeight: FontWeight.w500,
       color: Color.fromARGB(255, 25, 25, 25),
     ),
   ),
-  //Set widgets default styling
+  // //Set widgets default styling
   appBarTheme: const AppBarTheme(
     backgroundColor: Color.fromARGB(255, 255, 255, 255),
     scrolledUnderElevation: 0,
@@ -106,15 +102,15 @@ ThemeData materialLightTheme = ThemeData(
       disabledBackgroundColor: kColorGrayScheme.tertiary,
       disabledForegroundColor: kColorGrayScheme.onTertiary,
       shadowColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      textStyle: TextStyle(
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      textStyle: const TextStyle(
         fontFamily: 'InclusiveSans',
-        fontSize: 20.0,
-        fontWeight: FontWeight.w500,
-        color: kColorScheme.onPrimary,
+        fontSize: 16.0,
+        fontWeight: FontWeight.w600,
       ),
-      side: BorderSide(color: kColorScheme.tertiary, width: 1.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(

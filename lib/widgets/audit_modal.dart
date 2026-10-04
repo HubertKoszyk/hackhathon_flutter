@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/accessibility_audit.dart';
 import '../providers/app_state.dart';
+import '../theme.dart';
 
+/// Nowoczesny modal audytu fotograficznego Street View AI
+/// w pełni dostosowany do nowego, jasnego stylu z theme.dart
 class AuditModal extends StatefulWidget {
   final AccessibilityAudit audit;
 
@@ -17,667 +20,720 @@ class _AuditModalState extends State<AuditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final state = context.watch<AppState>();
     final isPL = state.language == 'pl';
     final audit = widget.audit;
-    final hasBypassPhoto = audit.bypassPhotoUrl != null && audit.bypassPhotoUrl!.isNotEmpty;
+    final hasBypassPhoto =
+        audit.bypassPhotoUrl != null && audit.bypassPhotoUrl!.isNotEmpty;
 
     final currentPhoto = (_showBypassPhoto && hasBypassPhoto)
         ? audit.bypassPhotoUrl!
         : audit.photoUrl;
 
-    // Jeżeli jesteśmy na trasie dostępnej (audit.isAccessible == true):
-    // _showBypassPhoto == false -> pokazujemy zdjęcie trasy dostępnej (isShowingBarrier = false)
-    // _showBypassPhoto == true -> pokazujemy zdjęcie ominiętej bariery (isShowingBarrier = true)
-    // Jeżeli jesteśmy na trasie ze schodami/barierą (audit.isAccessible == false):
-    // _showBypassPhoto == false -> pokazujemy zdjęcie bariery (isShowingBarrier = true)
-    // _showBypassPhoto == true -> pokazujemy zdjęcie objazdu (isShowingBarrier = false)
     final bool isShowingBarrier = audit.isAccessible
         ? _showBypassPhoto
         : !_showBypassPhoto;
 
-    final headerTitle = (isShowingBarrier && audit.isAccessible && audit.bypassTitlePl != null)
-        ? (isPL ? audit.bypassTitlePl! : (audit.bypassTitleEn ?? audit.bypassTitlePl!))
+    final headerTitle =
+        (isShowingBarrier && audit.isAccessible && audit.bypassTitlePl != null)
+        ? (isPL
+              ? audit.bypassTitlePl!
+              : (audit.bypassTitleEn ?? audit.bypassTitlePl!))
         : audit.checkpointName;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+          maxWidth: 480,
+        ),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A), // Slate 900
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isShowingBarrier
-                ? const Color(0xFFEF4444).withValues(alpha: 0.6)
-                : const Color(0xFF10B981).withValues(alpha: 0.6),
+                ? theme.colorScheme.error.withValues(alpha: 0.5)
+                : theme.colorScheme.outline,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: (isShowingBarrier
-                      ? const Color(0xFFEF4444)
-                      : const Color(0xFF10B981))
-                  .withValues(alpha: 0.3),
+              color:
+                  (isShowingBarrier
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.primary)
+                      .withValues(alpha: 0.15),
               blurRadius: 28,
               offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Górny nagłówek z badge'ami AI i profilem
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isShowingBarrier
-                            ? const Color(0xFFEF4444).withValues(alpha: 0.2)
-                            : const Color(0xFF10B981).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        isShowingBarrier ? Icons.warning_rounded : Icons.verified,
-                        color: isShowingBarrier
-                            ? const Color(0xFFF87171)
-                            : const Color(0xFF34D399),
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                isShowingBarrier
-                                    ? (audit.isAccessible
-                                        ? (isPL ? 'OMINIĘTA PRZESZKODA' : 'AVOIDED OBSTACLE')
-                                        : (isPL ? 'WYKRYTA PRZESZKODA' : 'OBSTACLE DETECTED'))
-                                    : (isPL ? 'AUDYT STREET VIEW' : 'STREET VIEW AUDIT'),
-                                style: TextStyle(
-                                  color: isShowingBarrier
-                                      ? const Color(0xFFF87171)
-                                      : const Color(0xFF34D399),
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: Colors.white12,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _getProfileLabel(state.profile, isPL),
-                                  style: const TextStyle(color: Colors.white70, fontSize: 9.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            headerTitle,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70, size: 20),
-                      onPressed: state.closeAudit,
-                    ),
-                  ],
-                ),
-              ),
-
-              // 2. Przełącznik "Bariera (Street View)" vs "Objazd KrakAccess" (jeśli dostępny)
-              if (hasBypassPhoto)
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Górny nagłówek z badge'ami AI i profilem
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => setState(() => _showBypassPhoto = false),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: !_showBypassPhoto
-                                    ? (audit.isAccessible
-                                        ? const Color(0xFF065F46)
-                                        : const Color(0xFF7F1D1D))
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    audit.isAccessible
-                                        ? Icons.check_circle
-                                        : Icons.camera_alt,
-                                    color: audit.isAccessible
-                                        ? const Color(0xFF34D399)
-                                        : const Color(0xFFF87171),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    audit.isAccessible
-                                        ? (isPL ? 'Trakt KrakAccess (Płasko)' : 'KrakAccess Path (Flat)')
-                                        : (isPL ? 'Bariera na trasie' : 'Barrier on route'),
-                                    style: TextStyle(
-                                      color: !_showBypassPhoto ? Colors.white : Colors.white60,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => setState(() => _showBypassPhoto = true),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: _showBypassPhoto
-                                    ? (audit.isAccessible
-                                        ? const Color(0xFF7F1D1D)
-                                        : const Color(0xFF065F46))
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    audit.isAccessible
-                                        ? Icons.visibility
-                                        : Icons.check_circle,
-                                    color: audit.isAccessible
-                                        ? const Color(0xFFF87171)
-                                        : const Color(0xFF34D399),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    audit.isAccessible
-                                        ? (isPL ? 'Ominięta przeszkoda' : 'Avoided Obstacle')
-                                        : (isPL ? 'Objazd KrakAccess' : 'KrakAccess Bypass'),
-                                    style: TextStyle(
-                                      color: _showBypassPhoto ? Colors.white : Colors.white60,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              // 3. Widok zdjęcia Street View z HUDem analitycznym AI
-              Stack(
-                children: [
-                  ClipRRect(
-                    child: SizedBox(
-                      height: 210,
-                      width: double.infinity,
-                      child: _buildStreetViewImage(currentPhoto, isShowingBarrier),
-                    ),
-                  ),
-
-                  // Overlay z gradientem i siatką
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                            Colors.black.withValues(alpha: 0.78),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // HUD: Koordynaty GPS na żywo
-                  Positioned(
-                    top: 10,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.location_on, color: Color(0xFF38BDF8), size: 12),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Znacznik Street View Camera lub Live GeoSearch
-                  Positioned(
-                    top: 10,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (isShowingBarrier && audit.isLiveGeoPhoto)
-                            ? const Color(0xFF0369A1).withValues(alpha: 0.9)
-                            : Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: (isShowingBarrier && audit.isLiveGeoPhoto)
-                              ? const Color(0xFF38BDF8)
-                              : Colors.white24,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            (isShowingBarrier && audit.isLiveGeoPhoto)
-                                ? Icons.public
-                                : Icons.streetview,
-                            color: const Color(0xFF38BDF8),
-                            size: 13,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            (isShowingBarrier && audit.isLiveGeoPhoto)
-                                ? (isPL ? 'Pobrane na żywo • GeoSearch' : 'Live GeoPhoto • GeoSearch')
-                                : 'Kraków Street View • HD',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Bounding frame jeśli wykryto barierę
-                  if (isShowingBarrier)
-                    Positioned(
-                      top: 45,
-                      left: 25,
-                      right: 25,
-                      bottom: 52,
-                      child: Container(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 14, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFEF4444), width: 2),
-                          borderRadius: BorderRadius.circular(8),
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.08),
-                        ),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFEF4444),
-                              borderRadius: BorderRadius.only(
-                                bottomRight: Radius.circular(6),
-                              ),
-                            ),
-                            child: Text(
-                              isPL
-                                  ? (audit.stairsDetected || audit.stairsCount > 0
-                                      ? 'STOPNIE / SCHODY'
-                                      : 'TRUDNA NAWIERZCHNIA')
-                                  : 'ARCHITECTURAL HAZARD',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  // Znacznik zweryfikowanej dostępności
-                  if (!isShowingBarrier)
-                    Positioned(
-                      top: 45,
-                      left: 20,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF065F46).withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF34D399)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.verified, color: Color(0xFF34D399), size: 13),
-                            const SizedBox(width: 4),
-                            Text(
-                              isPL ? 'TRAKT BEZ BARIER (WCAG)' : 'BARRIER-FREE ROUTE (WCAG)',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // Wskaźnik punktacji na dole zdjęcia
-                  Positioned(
-                    bottom: 10,
-                    left: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
                           color: isShowingBarrier
-                              ? const Color(0xFFF87171)
-                              : const Color(0xFF34D399),
+                              ? kColorGrayScheme.error
+                              : theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          isShowingBarrier
+                              ? Icons.warning_amber_rounded
+                              : Icons.verified,
+                          color: isShowingBarrier
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
+                          size: 22,
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isShowingBarrier ? Icons.block : Icons.check_circle,
-                            color: isShowingBarrier
-                                ? const Color(0xFFF87171)
-                                : const Color(0xFF34D399),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isShowingBarrier
-                                ? (audit.isAccessible
-                                    ? (isPL ? 'Bariera na trasie prostej: 25/100' : 'Direct path barrier: 25/100')
-                                    : '${audit.score}/100 ${isPL ? 'Wskaźnik dostępności' : 'Score'}')
-                                : (isPL ? 'Trakt KrakAccess: 98% Bezpieczny' : 'KrakAccess Path: 98% Safe (WCAG)'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // 4. Parametry architektoniczne punktu
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFeatureRow(
-                      icon: Icons.stairs,
-                      label: isPL ? 'Schody' : 'Stairs',
-                      value: isShowingBarrier
-                          ? (audit.stairsCount > 0
-                              ? (isPL
-                                  ? 'Wykryto ${audit.stairsCount} stopni (Brak windy / rampy!)'
-                                  : '${audit.stairsCount} steps detected (No ramp / lift!)')
-                              : (isPL ? '0 stopni (Bariera krawężnikowa / nawierzchnia)' : '0 steps (Curbs & surface barrier)'))
-                          : (isPL ? '0 stopni (Płasko)' : '0 steps (Flat)'),
-                      isPositive: !isShowingBarrier,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildFeatureRow(
-                      icon: Icons.straighten,
-                      label: isPL ? 'Krawężnik' : 'Curb Height',
-                      value: isShowingBarrier
-                          ? (audit.curbStatus.isNotEmpty
-                              ? audit.curbStatus
-                              : (isPL ? 'Krawężnik 12-14 cm' : '12-14 cm curb'))
-                          : (isPL ? 'Zjazd 0-1 cm zlicowany z jezdnią' : 'Dropped curb 0-1 cm flush'),
-                      isPositive: !isShowingBarrier,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildFeatureRow(
-                      icon: Icons.texture,
-                      label: isPL ? 'Nawierzchnia' : 'Surface Type',
-                      value: isShowingBarrier
-                          ? (audit.surfaceType.isNotEmpty
-                              ? audit.surfaceType
-                              : (isPL ? 'Nierówna kostka / schody' : 'Uneven cobblestone / stairs'))
-                          : (isPL ? 'Gładkie płyty granitowe / asfalt szlifowany' : 'Smooth granite slabs / asphalt'),
-                      isPositive: !isShowingBarrier,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Wpływ na wybrany profil mobilności
-                    if (audit.profileImpactPl != null && isShowingBarrier) ...[
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getProfileIcon(state.profile),
-                              color: const Color(0xFF38BDF8),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                isPL ? audit.profileImpactPl! : (audit.profileImpactEn ?? audit.profileImpactPl!),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // Informacja o pobraniu zdjęcia w czasie rzeczywistym z Wikimedia Commons
-                    if (isShowingBarrier && audit.isLiveGeoPhoto) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0369A1).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35)),
-                        ),
-                        child: Row(
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.travel_explore, color: Color(0xFF38BDF8), size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isPL ? 'ZDJĘCIE POBRANE NA ŻYWO (GPS)' : 'LIVE GEOSEARCH PHOTO (GPS)',
-                                    style: const TextStyle(
-                                      color: Color(0xFF38BDF8),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    isPL
-                                        ? 'Fotografia pobrana w czasie rzeczywistym z Wikimedia Commons GeoSearch dla współrzędnych tej przeszkody (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nObiekt: ${audit.photoTitle ?? "Okolice punktu"}\nAutor: ${audit.photoSourceAttribution ?? "Creative Commons"}'
-                                        : 'Real-time photograph fetched from Wikimedia Commons GeoSearch for obstacle coordinates (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nSubject: ${audit.photoTitle ?? "Location"}\nAuthor: ${audit.photoSourceAttribution ?? "Creative Commons"}',
-                                    style: const TextStyle(
-                                      color: Color(0xFFBAE6FD),
-                                      fontSize: 10,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // Werdykt AI Gemini Vision
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: (isShowingBarrier
-                                ? const Color(0xFFEF4444)
-                                : const Color(0xFF10B981))
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: (isShowingBarrier
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFF10B981))
-                              .withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.psychology,
-                            color: isShowingBarrier
-                                ? const Color(0xFFF87171)
-                                : const Color(0xFF34D399),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                               children: [
-                                Text(
-                                  isPL ? 'Werdykt Gemini AI:' : 'Gemini AI Verdict:',
-                                  style: TextStyle(
-                                    color: isShowingBarrier
-                                        ? const Color(0xFFF87171)
-                                        : const Color(0xFF34D399),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
                                 Text(
                                   isShowingBarrier
                                       ? (audit.isAccessible
-                                          ? (isPL
-                                              ? 'Ominięto tę barierę dzięki alternatywnej trasie KrakAccess.'
-                                              : 'This barrier is avoided via the KrakAccess route.')
-                                          : (isPL ? audit.aiVerdictPl : audit.aiVerdictEn))
+                                            ? (isPL
+                                                  ? 'OMINIĘTA PRZESZKODA'
+                                                  : 'AVOIDED OBSTACLE')
+                                            : (isPL
+                                                  ? 'WYKRYTA PRZESZKODA'
+                                                  : 'OBSTACLE DETECTED'))
                                       : (isPL
-                                          ? (audit.isAccessible
-                                              ? audit.aiVerdictPl
-                                              : 'KrakAccess skierował Cię bezpiecznym obejściem naziemnym bez barier architektonicznych.')
-                                          : (audit.isAccessible ? audit.aiVerdictEn : 'KrakAccess routed you through a flat, barrier-free path.')),
+                                            ? 'AUDYT STREET VIEW AI'
+                                            : 'STREET VIEW AI AUDIT'),
+                                  style: TextStyle(
+                                    color: isShowingBarrier
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.primary,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: kColorGrayScheme.primary,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: kColorGrayScheme.secondary,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _getProfileLabel(state.profile, isPL),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme.onSurface,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              headerTitle,
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.65,
+                          ),
+                          size: 22,
+                        ),
+                        onPressed: state.closeAudit,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Przełącznik "Bariera" vs "Trakt KrakAccess" (jeśli dostępny bypass)
+                if (hasBypassPhoto)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: kColorGrayScheme.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: kColorGrayScheme.secondary),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setState(() => _showBypassPhoto = false),
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: !_showBypassPhoto
+                                      ? theme.colorScheme.surface
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: !_showBypassPhoto
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                  border: !_showBypassPhoto
+                                      ? Border.all(
+                                          color: theme.colorScheme.outline
+                                              .withValues(alpha: 0.6),
+                                        )
+                                      : null,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4.0,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        audit.isAccessible
+                                            ? Icons.check_circle_outline
+                                            : Icons.warning_amber_rounded,
+                                        color: audit.isAccessible
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.error,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          audit.isAccessible
+                                              ? (isPL
+                                                    ? 'Droga NavAble (Płasko)'
+                                                    : 'NavAble Path (Flat)')
+                                              : (isPL
+                                                    ? 'Bariera na trasie'
+                                                    : 'Barrier on route'),
+                                          style: TextStyle(
+                                            color: !_showBypassPhoto
+                                                ? theme.colorScheme.onSurface
+                                                : theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.55),
+                                            fontSize: 12,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setState(() => _showBypassPhoto = true),
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _showBypassPhoto
+                                      ? theme.colorScheme.surface
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: _showBypassPhoto
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                  border: _showBypassPhoto
+                                      ? Border.all(
+                                          color: theme.colorScheme.outline
+                                              .withValues(alpha: 0.6),
+                                        )
+                                      : null,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      audit.isAccessible
+                                          ? Icons.visibility_outlined
+                                          : Icons.check_circle_outline,
+                                      color: audit.isAccessible
+                                          ? theme.colorScheme.error
+                                          : theme.colorScheme.primary,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      audit.isAccessible
+                                          ? (isPL
+                                                ? 'Ominięta przeszkoda'
+                                                : 'Avoided Obstacle')
+                                          : (isPL
+                                                ? 'Objazd NavAble'
+                                                : 'NavAble Bypass'),
+                                      style: TextStyle(
+                                        color: _showBypassPhoto
+                                            ? theme.colorScheme.onSurface
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.55),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // 3. Widok zdjęcia Street View z HUDem analitycznym AI
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16.0),
+                        child: SizedBox(
+                          height: 205,
+                          width: double.infinity,
+                          child: _buildStreetViewImage(
+                            currentPhoto,
+                            isShowingBarrier,
+                          ),
+                        ),
+                      ),
+
+                      // Overlay z delikatnym gradientem dla czytelności etykiet
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.15),
+                                  Colors.black.withValues(alpha: 0.75),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Znacznik zweryfikowanej dostępności
+                      if (!isShowingBarrier)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.verified,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isPL
+                                      ? 'DROGA BEZ BARIER'
+                                      : 'BARRIER-FREE ROUTE',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 11.5,
-                                    height: 1.35,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    const SizedBox(height: 14),
-
-                    // Przycisk zamknij
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: state.closeAudit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Colors.white24),
+                      // Wskaźnik punktacji na dole zdjęcia
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isShowingBarrier
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.primary,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isShowingBarrier
+                                    ? Icons.block
+                                    : Icons.check_circle,
+                                color: isShowingBarrier
+                                    ? theme.colorScheme.error
+                                    : theme.colorScheme.primary,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isShowingBarrier
+                                    ? (audit.isAccessible
+                                          ? (isPL
+                                                ? 'Bariera na trasie prostej: 25/100'
+                                                : 'Direct path barrier: 25/100')
+                                          : '${audit.score}/100 ${isPL ? 'Wskaźnik dostępności' : 'Score'}')
+                                    : (isPL
+                                          ? 'Wskaźnik dostępności: 98%'
+                                          : 'Wskaźnik dostępności: 98%'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Text(
-                          isPL ? 'Wróć do mapy Krakowa' : 'Back to Kraków Map',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 4. Parametry architektoniczne punktu
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: kColorGrayScheme.primary,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: kColorGrayScheme.secondary),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildFeatureRow(
+                              theme: theme,
+                              icon: Icons.stairs,
+                              label: isPL ? 'Schody' : 'Stairs',
+                              value: isShowingBarrier
+                                  ? (audit.stairsCount > 0
+                                        ? (isPL
+                                              ? 'Wykryto ${audit.stairsCount} stopni (Brak windy / rampy!)'
+                                              : '${audit.stairsCount} steps detected (No ramp / lift!)')
+                                        : (isPL
+                                              ? '0 stopni (Bariera krawężnikowa / nawierzchnia)'
+                                              : '0 steps (Curbs & surface barrier)'))
+                                  : (isPL
+                                        ? '0 stopni (Płasko)'
+                                        : '0 steps (Flat)'),
+                              isPositive: !isShowingBarrier,
+                            ),
+                            const Divider(height: 14, thickness: 0.8),
+                            _buildFeatureRow(
+                              theme: theme,
+                              icon: Icons.straighten,
+                              label: isPL ? 'Krawężnik' : 'Curb Height',
+                              value: isShowingBarrier
+                                  ? (audit.curbStatus.isNotEmpty
+                                        ? audit.curbStatus
+                                        : (isPL
+                                              ? 'Krawężnik 12-14 cm'
+                                              : '12-14 cm curb'))
+                                  : (isPL
+                                        ? 'Zjazd 0-1 cm zlicowany z jezdnią'
+                                        : 'Dropped curb 0-1 cm flush'),
+                              isPositive: !isShowingBarrier,
+                            ),
+                            const Divider(height: 14, thickness: 0.8),
+                            _buildFeatureRow(
+                              theme: theme,
+                              icon: Icons.texture,
+                              label: isPL ? 'Nawierzchnia' : 'Surface Type',
+                              value: isShowingBarrier
+                                  ? (audit.surfaceType.isNotEmpty
+                                        ? audit.surfaceType
+                                        : (isPL
+                                              ? 'Nierówna kostka / schody'
+                                              : 'Uneven cobblestone / stairs'))
+                                  : (isPL
+                                        ? 'Gładkie płyty granitowe / asfalt szlifowany'
+                                        : 'Smooth granite slabs / asphalt'),
+                              isPositive: !isShowingBarrier,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 12),
+
+                      // Wpływ na wybrany profil mobilności
+                      if (audit.profileImpactPl != null &&
+                          isShowingBarrier) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getProfileIcon(state.profile),
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  isPL
+                                      ? audit.profileImpactPl!
+                                      : (audit.profileImpactEn ??
+                                            audit.profileImpactPl!),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                    fontSize: 12,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Informacja o pobraniu zdjęcia w czasie rzeczywistym z Wikimedia Commons
+                      if (isShowingBarrier && audit.isLiveGeoPhoto) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.travel_explore,
+                                color: theme.colorScheme.primary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isPL
+                                          ? 'ZDJĘCIE POBRANE NA ŻYWO (GPS)'
+                                          : 'LIVE GEOSEARCH PHOTO (GPS)',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.primary,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      isPL
+                                          ? 'Fotografia pobrana w czasie rzeczywistym z Wikimedia Commons GeoSearch dla współrzędnych tej przeszkody (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nObiekt: ${audit.photoTitle ?? "Okolice punktu"}\nAutor: ${audit.photoSourceAttribution ?? "Creative Commons"}'
+                                          : 'Real-time photograph fetched from Wikimedia Commons GeoSearch for obstacle coordinates (${audit.location.latitude.toStringAsFixed(4)}°N, ${audit.location.longitude.toStringAsFixed(4)}°E)\nSubject: ${audit.photoTitle ?? "Location"}\nAuthor: ${audit.photoSourceAttribution ?? "Creative Commons"}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontSize: 10.5,
+                                            color: theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.8),
+                                            height: 1.3,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Werdykt AI Gemini Vision
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isShowingBarrier
+                              ? kColorGrayScheme.error.withValues(alpha: 0.5)
+                              : theme.colorScheme.primaryContainer.withValues(
+                                  alpha: 0.6,
+                                ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isShowingBarrier
+                                ? theme.colorScheme.error.withValues(alpha: 0.4)
+                                : theme.colorScheme.outline,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.psychology,
+                              color: isShowingBarrier
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isPL ? 'Werdykt AI:' : 'AI Verdict:',
+                                    style: TextStyle(
+                                      color: isShowingBarrier
+                                          ? theme.colorScheme.error
+                                          : theme.colorScheme.primary,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    isShowingBarrier
+                                        ? (audit.isAccessible
+                                              ? (isPL
+                                                    ? 'Ominięto tę barierę dzięki alternatywnej trasie NavAble.'
+                                                    : 'This barrier is avoided via the NavAble route.')
+                                              : (isPL
+                                                    ? audit.aiVerdictPl
+                                                    : audit.aiVerdictEn))
+                                        : (isPL
+                                              ? (audit.isAccessible
+                                                    ? audit.aiVerdictPl
+                                                    : 'NavAble skierował Cię bezpiecznym obejściem naziemnym bez barier architektonicznych.')
+                                              : (audit.isAccessible
+                                                    ? audit.aiVerdictEn
+                                                    : 'NavAble routed you through a flat, barrier-free path.')),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: 12,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Przycisk zamknij
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: state.closeAudit,
+                          child: Text(
+                            isPL ? 'Wróć do mapy' : 'Back to map',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -699,9 +755,12 @@ class _AuditModalState extends State<AuditModal> {
       loadingBuilder: (ctx, child, progress) {
         if (progress == null) return child;
         return Container(
-          color: const Color(0xFF0F172A),
-          child: const Center(
-            child: CircularProgressIndicator(color: Color(0xFF38BDF8)),
+          color: kColorGrayScheme.primary,
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Theme.of(ctx).colorScheme.primary,
+            ),
           ),
         );
       },
@@ -741,6 +800,7 @@ class _AuditModalState extends State<AuditModal> {
   }
 
   Widget _buildFeatureRow({
+    required ThemeData theme,
     required IconData icon,
     required String label,
     required String value,
@@ -751,22 +811,29 @@ class _AuditModalState extends State<AuditModal> {
         Icon(
           icon,
           size: 16,
-          color: isPositive ? const Color(0xFF34D399) : const Color(0xFFF87171),
+          color: isPositive
+              ? theme.colorScheme.primary
+              : theme.colorScheme.error,
         ),
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            fontSize: 12,
+          ),
         ),
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              color: isPositive ? const Color(0xFF34D399) : const Color(0xFFF87171),
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isPositive
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.error,
+              fontSize: 12,
+              fontWeight: isPositive ? FontWeight.w600 : FontWeight.w700,
             ),
-            overflow: TextOverflow.ellipsis,
+            softWrap: true,
           ),
         ),
       ],

@@ -33,7 +33,8 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
     if (key.isEmpty) {
       VisionAuditService.geminiApiKey = '';
       setState(() {
-        _statusMessage = 'Wyczyszczono klucz. Aplikacja używa wbudowanego symulatora demonstracyjnego.';
+        _statusMessage =
+            'Wyczyszczono klucz. Aplikacja używa wbudowanego symulatora demonstracyjnego.';
         _isSuccess = false;
       });
       return;
@@ -52,10 +53,12 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
         if (success) {
           VisionAuditService.geminiApiKey = key;
           _isSuccess = true;
-          _statusMessage = 'Połączono pomyślnie z Google Gemini 1.5/2.0 Flash API! 🎉';
+          _statusMessage =
+              'Połączono pomyślnie z Google Gemini 1.5/2.0 Flash API! 🎉';
         } else {
           _isSuccess = false;
-          _statusMessage = 'Błąd weryfikacji klucza. Sprawdź czy klucz jest poprawny i czy ma aktywne API.';
+          _statusMessage =
+              'Błąd weryfikacji klucza. Sprawdź czy klucz jest poprawny i czy ma aktywne API.';
         }
       });
     }
@@ -90,7 +93,11 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -106,8 +113,13 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                         ),
                       ),
                       Text(
-                        isPL ? 'Silnik AI Vision dla KrakAccess' : 'AI Vision Engine for KrakAccess',
-                        style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11),
+                        isPL
+                            ? 'Silnik AI dla NavAble'
+                            : 'AI Engine for NavAble',
+                        style: const TextStyle(
+                          color: Color(0xFF38BDF8),
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
@@ -123,21 +135,37 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
               isPL
                   ? 'Wklej swój bezpłatny klucz API z Google AI Studio, aby aplikacja na żywo analizowała zdjęcia Street View i zgłoszenia mieszkańców:'
                   : 'Paste your free Google AI Studio API key for real-time vision analysis:',
-              style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
               obscureText: true,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontFamily: 'monospace',
+              ),
               decoration: InputDecoration(
                 hintText: 'AIzaSy...',
                 hintStyle: const TextStyle(color: Colors.white30),
                 filled: true,
                 fillColor: const Color(0xFF1E293B),
-                prefixIcon: const Icon(Icons.key, color: Color(0xFF38BDF8), size: 18),
+                prefixIcon: const Icon(
+                  Icons.key,
+                  color: Color(0xFF38BDF8),
+                  size: 18,
+                ),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white38, size: 18),
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white38,
+                    size: 18,
+                  ),
                   onPressed: () => _controller.clear(),
                 ),
                 border: OutlineInputBorder(
@@ -182,14 +210,21 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.white54, size: 16),
+                  const Icon(
+                    Icons.info_outline,
+                    color: Colors.white54,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       isPL
                           ? 'Darmowy klucz wygenerujesz na: aistudio.google.com (1500 zapytań/dzień gratis).'
                           : 'Get a free key at: aistudio.google.com (1500 req/day free).',
-                      style: const TextStyle(color: Colors.white60, fontSize: 10),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                 ],
@@ -223,7 +258,10 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                       _isTesting
                           ? (isPL ? 'Weryfikacja...' : 'Verifying...')
                           : (isPL ? 'Przetestuj i zapisz' : 'Test & Save Key'),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),

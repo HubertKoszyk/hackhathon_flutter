@@ -159,7 +159,7 @@ class _RouteSearchSheetState extends State<RouteSearchSheet> {
                 final loc = _filteredLocations[idx];
                 final isSelected = isStart
                     ? state.startLocation.id == loc.id
-                    : state.destinationLocation.id == loc.id;
+                    : state.destinationLocation?.id == loc.id;
 
                 return ListTile(
                   leading: Container(

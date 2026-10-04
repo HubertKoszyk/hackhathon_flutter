@@ -29,8 +29,16 @@ class AppState extends ChangeNotifier {
   LatLng? _userCurrentGpsPoint;
 
   // Wyszukiwanie punktu A i B
-  KrakowLocation _startLocation = KrakowLocationsDatabase.locations[0]; // Dworzec Główny
-  KrakowLocation _destinationLocation = KrakowLocationsDatabase.locations[1]; // Sukiennice
+  KrakowLocation _startLocation = const KrakowLocation(
+    id: 'loc_my_gps',
+    namePl: 'Moja lokalizacja (Planty / Dworzec Główny)',
+    nameEn: 'My location (Planty / Dworzec Główny)',
+    nameUk: 'Моє місцезнаходження (Planty / Dworzec Główny)',
+    address: 'Kraków, Planty / Dworzec Główny',
+    point: LatLng(50.0645, 19.9430),
+    category: 'gps',
+  );
+  KrakowLocation? _destinationLocation; // Puste przy starcie aplikacji
   bool _isAnalyzingRoute = false;
   String _analysisStatusText = '';
 
@@ -55,11 +63,12 @@ class AppState extends ChangeNotifier {
   bool _shouldRecenterMap = false;
 
   late List<ParkingSpot> _parkingSpots;
-  late List<RouteModel> _routes;
+  List<RouteModel> _routes = [];
 
   AppState() {
     _parkingSpots = KrakowDataService.getParkingSpots();
-    _routes = RoutingService.getRoutesForPreset(_selectedPresetId, _profile);
+    _routes = [];
+    useCurrentLocationAsStart(calculateRoute: false);
   }
 
   // Getters
@@ -74,7 +83,7 @@ class AppState extends ChangeNotifier {
   bool get isLocatingUser => _isLocatingUser;
   LatLng? get userCurrentGpsPoint => _userCurrentGpsPoint;
   KrakowLocation get startLocation => _startLocation;
-  KrakowLocation get destinationLocation => _destinationLocation;
+  KrakowLocation? get destinationLocation => _destinationLocation;
   bool get isAnalyzingRoute => _isAnalyzingRoute;
   String get analysisStatusText => _analysisStatusText;
 
@@ -83,13 +92,15 @@ class AppState extends ChangeNotifier {
   List<NavigationStep> get navigationSteps => _navigationSteps;
   int get currentStepIndex => _currentStepIndex;
   NavigationStep? get currentStep =>
-      (_navigationSteps.isNotEmpty && _currentStepIndex < _navigationSteps.length)
-          ? _navigationSteps[_currentStepIndex]
-          : null;
+      (_navigationSteps.isNotEmpty &&
+          _currentStepIndex < _navigationSteps.length)
+      ? _navigationSteps[_currentStepIndex]
+      : null;
   NavigationStep? get nextStep =>
-      (_navigationSteps.isNotEmpty && _currentStepIndex + 1 < _navigationSteps.length)
-          ? _navigationSteps[_currentStepIndex + 1]
-          : null;
+      (_navigationSteps.isNotEmpty &&
+          _currentStepIndex + 1 < _navigationSteps.length)
+      ? _navigationSteps[_currentStepIndex + 1]
+      : null;
   LatLng? get navigationUserPosition => _navigationUserPosition;
   double get navigationBearing => _navigationBearing;
   double get distanceToNextStep => _distanceToNextStep;
@@ -105,13 +116,20 @@ class AppState extends ChangeNotifier {
 
   List<ParkingSpot> get parkingSpots => _parkingSpots;
   List<RouteModel> get routes => _routes;
-  RouteModel? get currentRoute => _routes.isNotEmpty ? _routes[_selectedRouteIndex] : null;
+  RouteModel? get currentRoute =>
+      _routes.isNotEmpty ? _routes[_selectedRouteIndex] : null;
 
   String tr(String key) => AppTranslations.tr(key, _language);
 
   // Actions
   void toggleLanguage() {
-    _language = _language == 'pl' ? 'en' : 'pl';
+    if (_language == 'pl') {
+      _language = 'en';
+    } else if (_language == 'en') {
+      _language = 'uk';
+    } else {
+      _language = 'pl';
+    }
     notifyListeners();
   }
 
@@ -122,12 +140,14 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void setProfile(MobilityProfile newProfile) {
-    if (_profile != newProfile) {
-      _profile = newProfile;
-      // Natychmiast przelicz trasy, wskaźniki i bariery pod nowy profil!
-      planRouteBetweenSelectedPoints(showLoader: false);
-      notifyListeners();
+  Future<void> setProfile(MobilityProfile newProfile) async {
+    _profile = newProfile;
+    notifyListeners();
+
+    // Jeśli punkt docelowy jest wybrany lub trasa została wyznaczona,
+    // natychmiast przeliczamy trasę z widocznym ekranem ładowania pod nowy profil!
+    if (_destinationLocation != null || _routes.isNotEmpty) {
+      await planRouteBetweenSelectedPoints(showLoader: true);
     }
   }
 
@@ -143,36 +163,56 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void clearRoutes() {
+    _routes = [];
+    _selectedRouteIndex = 0;
+    _isAnalyzingRoute = false;
+    notifyListeners();
+  }
+
   void selectParking(ParkingSpot? spot) {
     _selectedParking = spot;
     notifyListeners();
   }
 
-  void setStartLocation(KrakowLocation loc) {
+  void setStartLocation(KrakowLocation loc, {bool calculateRoute = false}) {
     _startLocation = loc;
     notifyListeners();
-    planRouteBetweenSelectedPoints(showLoader: true);
+    if (calculateRoute && _destinationLocation != null) {
+      planRouteBetweenSelectedPoints(showLoader: true);
+    }
   }
 
-  void setDestinationLocation(KrakowLocation loc) {
+  void setDestinationLocation(
+    KrakowLocation? loc, {
+    bool calculateRoute = false,
+  }) {
     _destinationLocation = loc;
     notifyListeners();
-    planRouteBetweenSelectedPoints(showLoader: true);
+    if (calculateRoute && loc != null) {
+      planRouteBetweenSelectedPoints(showLoader: true);
+    }
   }
 
-  void swapLocations() {
+  void swapLocations({bool calculateRoute = false}) {
+    if (_destinationLocation == null) return;
     final temp = _startLocation;
-    _startLocation = _destinationLocation;
+    _startLocation = _destinationLocation!;
     _destinationLocation = temp;
-    planRouteBetweenSelectedPoints(showLoader: true);
+    notifyListeners();
+    if (calculateRoute) {
+      planRouteBetweenSelectedPoints(showLoader: true);
+    }
   }
 
   void setCustomPin(LatLng point) {
     _customPin = point;
     _destinationLocation = KrakowLocation(
       id: 'loc_custom_${DateTime.now().millisecondsSinceEpoch}',
-      namePl: 'Punkt na mapie (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
-      nameEn: 'Map point (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
+      namePl:
+          'Punkt na mapie (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
+      nameEn:
+          'Map point (${point.latitude.toStringAsFixed(3)}, ${point.longitude.toStringAsFixed(3)})',
       address: 'Kraków (współrzędne GPS)',
       point: point,
       category: 'map',
@@ -187,7 +227,7 @@ class AppState extends ChangeNotifier {
   }
 
   /// Pobiera pozycję GPS i ustawia ją jako punkt startowy
-  Future<void> useCurrentLocationAsStart() async {
+  Future<void> useCurrentLocationAsStart({bool calculateRoute = false}) async {
     _isLocatingUser = true;
     notifyListeners();
 
@@ -197,7 +237,9 @@ class AppState extends ChangeNotifier {
       _userCurrentGpsPoint = userLoc.point;
       _isLocatingUser = false;
       notifyListeners();
-      await planRouteBetweenSelectedPoints(showLoader: true);
+      if (calculateRoute && _destinationLocation != null) {
+        await planRouteBetweenSelectedPoints(showLoader: true);
+      }
     } else {
       _isLocatingUser = false;
       notifyListeners();
@@ -206,50 +248,85 @@ class AppState extends ChangeNotifier {
 
   /// Główna metoda kalkulacji trasy z analizą AI Gemini i wykrywaniem barier
   Future<void> planRouteBetweenSelectedPoints({bool showLoader = true}) async {
+    if (_destinationLocation == null) {
+      _routes = [];
+      _isAnalyzingRoute = false;
+      notifyListeners();
+      return;
+    }
+
     _selectedParking = null;
 
     if (showLoader) {
       _isAnalyzingRoute = true;
-      _analysisStatusText = _language == 'pl'
-          ? 'Pobieranie geometrii pieszej Krakowa...'
-          : 'Fetching pedestrian geometry...';
+      _analysisStatusText = _language == 'uk'
+          ? 'Gemini 3.8 AI: Сканування бар’єрів для профілю: ${_getProfileName()}...'
+          : (_language == 'pl'
+                ? 'Gemini 3.8 AI: Skanowanie barier dla profilu: ${_getProfileName()}...'
+                : 'Gemini 3.8 AI: Scanning barriers for profile: ${_getProfileName()}...');
       notifyListeners();
 
-      await Future.delayed(const Duration(milliseconds: 300));
-      _analysisStatusText = _language == 'pl'
-          ? 'Gemini 3.8 AI: Skanowanie schodów i barier (${_getProfileName()})...'
-          : 'Gemini 3.8 AI: Scanning stairs and obstacles (${_getProfileName()})...';
+      await Future.delayed(const Duration(milliseconds: 350));
+      _analysisStatusText = _language == 'uk'
+          ? 'Прокладання оптимального безбар’єрного маршруту...'
+          : (_language == 'pl'
+                ? 'Wyznaczanie optymalnej trasy bez przeszkód...'
+                : 'Calculating optimal barrier-free route...');
       notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 300));
     }
 
     final sId = _startLocation.id;
-    final dId = _destinationLocation.id;
+    final dId = _destinationLocation!.id;
 
     if (sId == 'loc_dworzec' && dId == 'loc_sukiennice') {
-      _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_dworzec_rynek',
+        _profile,
+      );
     } else if (sId == 'loc_sukiennice' && dId == 'loc_dworzec') {
-      _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile, reversed: true);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_dworzec_rynek',
+        _profile,
+        reversed: true,
+      );
     } else if (sId == 'loc_wawel' && dId == 'loc_kazimierz') {
-      _routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', _profile);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_wawel_kazimierz',
+        _profile,
+      );
     } else if (sId == 'loc_kazimierz' && dId == 'loc_wawel') {
-      _routes = RoutingService.getRoutesForPreset('preset_wawel_kazimierz', _profile, reversed: true);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_wawel_kazimierz',
+        _profile,
+        reversed: true,
+      );
     } else if (sId == 'loc_barbakan' && dId == 'loc_sukiennice') {
-      _routes = RoutingService.getRoutesForPreset('preset_barbakan_sukiennice', _profile);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_barbakan_sukiennice',
+        _profile,
+      );
     } else if (sId == 'loc_sukiennice' && dId == 'loc_barbakan') {
-      _routes = RoutingService.getRoutesForPreset('preset_barbakan_sukiennice', _profile, reversed: true);
+      _routes = RoutingService.getRoutesForPreset(
+        'preset_barbakan_sukiennice',
+        _profile,
+        reversed: true,
+      );
     } else {
       if (showLoader) {
-        _analysisStatusText = _language == 'pl'
-            ? 'KrakAccess AI: Kalkulacja płaskiego obejścia i GTFS...'
-            : 'KrakAccess AI: Calculating accessible bypass & GTFS...';
+        _analysisStatusText = _language == 'uk'
+            ? 'Калькуляція пологого обходу та GTFS...'
+            : (_language == 'pl'
+                  ? 'Kalkulacja płaskiego obejścia i GTFS...'
+                  : 'Calculating accessible bypass & GTFS...');
         notifyListeners();
       }
       _routes = await RoutingService.calculateDynamicRoute(
         start: _startLocation.point,
-        end: _destinationLocation.point,
+        end: _destinationLocation!.point,
         profile: _profile,
-        startName: _language == 'pl' ? _startLocation.namePl : _startLocation.nameEn,
-        destinationName: _language == 'pl' ? _destinationLocation.namePl : _destinationLocation.nameEn,
+        startName: _startLocation.localizedName(_language),
+        destinationName: _destinationLocation!.localizedName(_language),
       );
     }
 
@@ -272,10 +349,13 @@ class AppState extends ChangeNotifier {
   String _getProfileName() {
     switch (_profile) {
       case MobilityProfile.wheelchair:
+        if (_language == 'uk') return 'Крісло колісне';
         return _language == 'pl' ? 'Wózek inwalidzki' : 'Wheelchair';
       case MobilityProfile.cane:
+        if (_language == 'uk') return 'З тростиною';
         return _language == 'pl' ? 'O kuli / Senior' : 'Cane / Senior';
       case MobilityProfile.stroller:
+        if (_language == 'uk') return 'Дитячий візок';
         return _language == 'pl' ? 'Wózek dziecięcy' : 'Stroller';
     }
   }
@@ -329,11 +409,15 @@ class AppState extends ChangeNotifier {
         route.coordinates[0],
         route.coordinates[1],
       );
-      _distanceToNextStep = const Distance().as(
-        LengthUnit.Meter,
-        _navigationUserPosition!,
-        _navigationSteps.isNotEmpty ? _navigationSteps[0].point : route.coordinates[1],
-      ).toDouble();
+      _distanceToNextStep = const Distance()
+          .as(
+            LengthUnit.Meter,
+            _navigationUserPosition!,
+            _navigationSteps.isNotEmpty
+                ? _navigationSteps[0].point
+                : route.coordinates[1],
+          )
+          .toDouble();
     }
 
     _startNavigationTicker();
@@ -375,7 +459,9 @@ class AppState extends ChangeNotifier {
 
   void _startNavigationTicker() {
     _navigationTimer?.cancel();
-    _navigationTimer = Timer.periodic(const Duration(milliseconds: 650), (timer) {
+    _navigationTimer = Timer.periodic(const Duration(milliseconds: 650), (
+      timer,
+    ) {
       if (!_isNavigating || currentRoute == null) {
         timer.cancel();
         return;
@@ -395,7 +481,9 @@ class AppState extends ChangeNotifier {
       final p2 = coords[_simCoordIndex + 1];
       final segmentLength = dist.as(LengthUnit.Meter, p1, p2).toDouble();
 
-      final fractionIncrement = (segmentLength > 0.5) ? (stepDistanceMeters / segmentLength) : 1.0;
+      final fractionIncrement = (segmentLength > 0.5)
+          ? (stepDistanceMeters / segmentLength)
+          : 1.0;
       _simSegmentFraction += fractionIncrement;
 
       if (_simSegmentFraction >= 1.0) {
@@ -419,8 +507,10 @@ class AppState extends ChangeNotifier {
       final curP1 = coords[_simCoordIndex];
       final curP2 = coords[_simCoordIndex + 1];
       _navigationUserPosition = LatLng(
-        curP1.latitude + (curP2.latitude - curP1.latitude) * _simSegmentFraction,
-        curP1.longitude + (curP2.longitude - curP1.longitude) * _simSegmentFraction,
+        curP1.latitude +
+            (curP2.latitude - curP1.latitude) * _simSegmentFraction,
+        curP1.longitude +
+            (curP2.longitude - curP1.longitude) * _simSegmentFraction,
       );
 
       // Oblicz bearing (kierunek nawigacyjny strzałki)
@@ -429,10 +519,13 @@ class AppState extends ChangeNotifier {
       // Oblicz dystans do najbliższego manewru
       if (_currentStepIndex < _navigationSteps.length) {
         final targetStepPoint = _navigationSteps[_currentStepIndex].point;
-        _distanceToNextStep = dist.as(LengthUnit.Meter, _navigationUserPosition!, targetStepPoint).toDouble();
+        _distanceToNextStep = dist
+            .as(LengthUnit.Meter, _navigationUserPosition!, targetStepPoint)
+            .toDouble();
 
         // Jeśli zbliżyliśmy się na mniej niż 16m do manewru, przejdź do kolejnego manewru
-        if (_distanceToNextStep < 16 && _currentStepIndex < _navigationSteps.length - 1) {
+        if (_distanceToNextStep < 16 &&
+            _currentStepIndex < _navigationSteps.length - 1) {
           _currentStepIndex++;
         }
       }
@@ -441,20 +534,33 @@ class AppState extends ChangeNotifier {
       double remaining = 0;
       for (int i = _simCoordIndex; i < coords.length - 1; i++) {
         if (i == _simCoordIndex) {
-          remaining += dist.as(LengthUnit.Meter, _navigationUserPosition!, coords[i + 1]);
+          remaining += dist.as(
+            LengthUnit.Meter,
+            _navigationUserPosition!,
+            coords[i + 1],
+          );
         } else {
           remaining += dist.as(LengthUnit.Meter, coords[i], coords[i + 1]);
         }
       }
       _remainingDistance = remaining;
       _remainingDurationSeconds = (remaining / 1.15).round().clamp(0, 9999);
-      _currentWalkingSpeedKmh = (3.8 + (_simulationSpeedMultiplier > 1 ? _simulationSpeedMultiplier * 1.5 : 0)).clamp(2.5, 18.0);
+      _currentWalkingSpeedKmh =
+          (3.8 +
+                  (_simulationSpeedMultiplier > 1
+                      ? _simulationSpeedMultiplier * 1.5
+                      : 0))
+              .clamp(2.5, 18.0);
 
       // Sprawdź czy zbliżamy się do przeszkody / objazdu (alert HUD)
       final audits = currentRoute!.audits;
       String? alert;
       for (final a in audits) {
-        final dAudit = dist.as(LengthUnit.Meter, _navigationUserPosition!, a.location);
+        final dAudit = dist.as(
+          LengthUnit.Meter,
+          _navigationUserPosition!,
+          a.location,
+        );
         if (dAudit < 60) {
           if (a.isAccessible) {
             alert = _language == 'pl'
