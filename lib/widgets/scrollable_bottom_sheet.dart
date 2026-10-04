@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hackhathon_flutter/theme.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../models/accessible_place.dart';
+import '../models/parking_spot.dart';
 import '../providers/app_state.dart';
 import '../services/krakow_locations.dart';
 import 'filters_modal.dart';
-import 'route_search_sheet.dart';
 
 class CustomStickySheet extends StatefulWidget {
   const CustomStickySheet({super.key});
@@ -34,6 +35,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
   String? _syncedStartId;
   String? _syncedDestinationId;
   bool _hasTriggeredSearch = false;
+  String _placeTabFilter = 'all'; // 'all', 'hotel', 'building', 'parking'
 
   @override
   void initState() {
@@ -119,15 +121,6 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     if (state.isAnalyzingRoute) {
       _hasTriggeredSearch = true;
     }
-  }
-
-  void _openSearchSheet(BuildContext context, LocationPickMode mode) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => RouteSearchSheet(pickMode: mode),
-    );
   }
 
   List<KrakowLocation> _getSuggestions({required bool isDestination}) {
@@ -385,7 +378,20 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                       ),
                     ),
 
-                  // 4. LISTA OSTATNIO WYSZUKIWANYCH POD SPODEM
+                  // 4. SEKCJA MIEJSC BEZ BARIER (HOTELE, KULTURA, KOPERTY)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      20.0,
+                      4.0,
+                      20.0,
+                      16.0,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: _buildAccessiblePlacesSection(context, theme, state),
+                    ),
+                  ),
+
+                  // 5. LISTA OSTATNIO WYSZUKIWANYCH POD SPODEM
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
                       20.0,
@@ -404,44 +410,26 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                         const SizedBox(height: 12),
                         _buildHistoryItem(
                           context,
-                          'Mały Rynek',
-                          'TAURON Arena',
-                          state,
-                        ),
-                        _buildHistoryItem(
-                          context,
-                          'Mały Rynek',
-                          'TAURON Arena',
-                          state,
-                        ),
-                        _buildHistoryItem(
-                          context,
-                          'Mały Rynek',
-                          'TAURON Arena',
-                          state,
-                        ),
-                        _buildHistoryItem(
-                          context,
                           'Dworzec Główny',
-                          'Wawel',
-                          state,
-                        ),
-                        _buildHistoryItem(
-                          context,
-                          'Kazimierz',
-                          'Kraków Główny',
-                          state,
-                        ),
-                        _buildHistoryItem(
-                          context,
                           'Rynek Główny',
-                          'Nowa Huta',
                           state,
                         ),
                         _buildHistoryItem(
                           context,
-                          'Podgórze',
-                          'Kopiec Kościuszki',
+                          'Wawel',
+                          'Plac Nowy (Kazimierz)',
+                          state,
+                        ),
+                        _buildHistoryItem(
+                          context,
+                          'Hotel Radisson Blu',
+                          'Sukiennice',
+                          state,
+                        ),
+                        _buildHistoryItem(
+                          context,
+                          'Centrum Kongresowe ICE',
+                          'Gmach Główny MNK',
                           state,
                         ),
                       ]),
@@ -837,6 +825,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
   IconData _getCategoryIcon(String cat) {
     switch (cat) {
+      case 'hotel':
+        return Icons.hotel_outlined;
       case 'transport':
         return Icons.train_outlined;
       case 'historic':
@@ -845,60 +835,509 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
         return Icons.park_outlined;
       case 'culture':
         return Icons.museum_outlined;
+      case 'parking':
+        return Icons.local_parking_outlined;
       default:
         return Icons.place_outlined;
     }
   }
 
-  // Wyświetlanie tekstu "Ładowanie..." w trakcie analizy trasy
-  Widget _buildLoadingSection(
+  Widget _buildAccessiblePlacesSection(
     BuildContext context,
     ThemeData theme,
     AppState state,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.6),
-          width: 1.0,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
+    final isPL = state.language == 'pl';
+    final isUK = state.language == 'uk';
+
+    final hotels = state.allAccessiblePlaces
+        .where((p) => p.category == AccessiblePlaceCategory.hotel)
+        .toList();
+    final buildings = state.allAccessiblePlaces
+        .where((p) => p.category != AccessiblePlaceCategory.hotel)
+        .toList();
+    final parkings = state.parkingSpots;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.accessible_forward,
+                  size: 20,
                   color: theme.colorScheme.primary,
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  isPL
+                      ? 'Miejsca z trybem bez barier'
+                      : (isUK
+                          ? 'Заклади з безбар’єрним режимом'
+                          : 'Accessible places & venues'),
+                  style: theme.textTheme.displaySmall?.copyWith(fontSize: 16),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 10),
-              Text(
-                'Ładowanie...',
-                style: theme.textTheme.displaySmall?.copyWith(fontSize: 18),
-              ),
-            ],
-          ),
-          if (state.analysisStatusText.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              state.analysisStatusText,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              child: Text(
+                '${state.allAccessiblePlaces.length + parkings.length} ${isPL ? 'punktów' : 'places'}',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
-        ],
+        ),
+        const SizedBox(height: 10),
+
+        // Filtry kategorii (Wszystkie, Hotele, Kultura/Budynki, Koperty)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildCategoryChip(
+                theme: theme,
+                label: isPL ? 'Wszystkie' : 'All',
+                isSelected: _placeTabFilter == 'all',
+                onTap: () => setState(() => _placeTabFilter = 'all'),
+              ),
+              const SizedBox(width: 6),
+              _buildCategoryChip(
+                theme: theme,
+                label: '🏨 ${isPL ? 'Hotele bez barier' : 'Hotels'} (${hotels.length})',
+                isSelected: _placeTabFilter == 'hotel',
+                onTap: () => setState(() => _placeTabFilter = 'hotel'),
+              ),
+              const SizedBox(width: 6),
+              _buildCategoryChip(
+                theme: theme,
+                label: '🏛️ ${isPL ? 'Budynki i kultura' : 'Venues'} (${buildings.length})',
+                isSelected: _placeTabFilter == 'building',
+                onTap: () => setState(() => _placeTabFilter = 'building'),
+              ),
+              const SizedBox(width: 6),
+              _buildCategoryChip(
+                theme: theme,
+                label: '🅿️ ${isPL ? 'Koperty ON' : 'Parking'} (${parkings.length})',
+                isSelected: _placeTabFilter == 'parking',
+                onTap: () => setState(() => _placeTabFilter = 'parking'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Horyzontalna lista kafelków
+        SizedBox(
+          height: 148,
+          child: _buildPlacesCardsList(
+            context,
+            theme,
+            state,
+            hotels,
+            buildings,
+            parkings,
+            isPL,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryChip({
+    required ThemeData theme,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withValues(alpha: 0.5),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface,
+          ),
+        ),
       ),
     );
   }
+
+  Widget _buildPlacesCardsList(
+    BuildContext context,
+    ThemeData theme,
+    AppState state,
+    List<AccessiblePlace> hotels,
+    List<AccessiblePlace> buildings,
+    List<ParkingSpot> parkings,
+    bool isPL,
+  ) {
+    List<Widget> items = [];
+
+    if (_placeTabFilter == 'all' || _placeTabFilter == 'hotel') {
+      for (final hotel in hotels) {
+        items.add(_buildPlaceCard(context, theme, state, hotel, isPL));
+      }
+    }
+
+    if (_placeTabFilter == 'all' || _placeTabFilter == 'building') {
+      for (final building in buildings) {
+        items.add(_buildPlaceCard(context, theme, state, building, isPL));
+      }
+    }
+
+    if (_placeTabFilter == 'all' || _placeTabFilter == 'parking') {
+      for (final spot in parkings) {
+        items.add(_buildParkingCard(context, theme, state, spot, isPL));
+      }
+    }
+
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: items.length,
+      separatorBuilder: (context, index) => const SizedBox(width: 10),
+      itemBuilder: (_, index) => items[index],
+    );
+  }
+
+  Widget _buildPlaceCard(
+    BuildContext context,
+    ThemeData theme,
+    AppState state,
+    AccessiblePlace place,
+    bool isPL,
+  ) {
+    final isHotel = place.category == AccessiblePlaceCategory.hotel;
+    final badgeColor = isHotel ? const Color(0xFFF59E0B) : const Color(0xFF8B5CF6);
+
+    return InkWell(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        state.selectAccessiblePlace(place);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 245,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: badgeColor.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isHotel ? Icons.hotel : Icons.account_balance,
+                        size: 11,
+                        color: badgeColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isHotel ? 'HOTEL' : 'KULTURA',
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    '★ ${place.accessibilityScore}/100',
+                    style: const TextStyle(
+                      color: Color(0xFF10B981),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  place.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${place.address} • ${place.district}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    if (place.hasWheelchairAccess)
+                      const Icon(Icons.accessible, size: 14, color: Color(0xFF0284C7)),
+                    if (place.hasHearingLoop) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.hearing, size: 14, color: Color(0xFFA78BFA)),
+                    ],
+                    if (place.hasAdaptedRooms) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.king_bed, size: 14, color: Color(0xFFF59E0B)),
+                    ],
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isPL ? 'Social & Info' : 'Social & Info',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 9,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParkingCard(
+    BuildContext context,
+    ThemeData theme,
+    AppState state,
+    ParkingSpot spot,
+    bool isPL,
+  ) {
+    const badgeColor = Color(0xFF0284C7);
+
+    return InkWell(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        state.selectParking(spot);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 245,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: badgeColor.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.accessible, size: 11, color: badgeColor),
+                      SizedBox(width: 4),
+                      Text(
+                        'KOPERTA P-24',
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (spot.isOccupied ? const Color(0xFFEF4444) : const Color(0xFF10B981))
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    spot.isOccupied ? (isPL ? 'Zajęte' : 'Occupied') : (isPL ? 'Wolne' : 'Free'),
+                    style: TextStyle(
+                      color: spot.isOccupied ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  spot.street,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${spot.spotsCount} ${isPL ? 'koperty' : 'spots'} • ${spot.district}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    spot.note,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Prowadź',
+                        style: TextStyle(
+                          color: Color(0xFF0284C7),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(Icons.navigation, size: 10, color: Color(0xFF0284C7)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 
   // Wyświetlanie tekstu wyniku wyszukiwania trasy
   Widget _buildResultSection(

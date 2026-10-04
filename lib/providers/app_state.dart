@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_translations.dart';
 import '../models/accessibility_audit.dart';
+import '../models/accessible_place.dart';
 import '../models/navigation_step.dart';
 import '../models/parking_spot.dart';
 import '../models/route_model.dart';
@@ -18,9 +19,12 @@ class AppState extends ChangeNotifier {
   String _language = 'pl';
   MobilityProfile _profile = MobilityProfile.wheelchair;
   bool _showParkingLayer = true;
+  bool _showAccessiblePlacesLayer = true;
+  String _placeCategoryFilter = 'all'; // 'all', 'hotel', 'building'
   final String _selectedPresetId = 'preset_dworzec_rynek';
   int _selectedRouteIndex = 0; // 0 = Accessible, 1 = Standard
   ParkingSpot? _selectedParking;
+  AccessiblePlace? _selectedAccessiblePlace;
   AccessibilityAudit? _activeAudit;
   LatLng? _customPin;
 
@@ -63,10 +67,12 @@ class AppState extends ChangeNotifier {
   bool _shouldRecenterMap = false;
 
   late List<ParkingSpot> _parkingSpots;
+  late List<AccessiblePlace> _accessiblePlaces;
   List<RouteModel> _routes = [];
 
   AppState() {
     _parkingSpots = KrakowDataService.getParkingSpots();
+    _accessiblePlaces = KrakowDataService.getAccessiblePlaces();
     _routes = [];
     useCurrentLocationAsStart(calculateRoute: false);
   }
@@ -75,9 +81,12 @@ class AppState extends ChangeNotifier {
   String get language => _language;
   MobilityProfile get profile => _profile;
   bool get showParkingLayer => _showParkingLayer;
+  bool get showAccessiblePlacesLayer => _showAccessiblePlacesLayer;
+  String get placeCategoryFilter => _placeCategoryFilter;
   String get selectedPresetId => _selectedPresetId;
   int get selectedRouteIndex => _selectedRouteIndex;
   ParkingSpot? get selectedParking => _selectedParking;
+  AccessiblePlace? get selectedAccessiblePlace => _selectedAccessiblePlace;
   AccessibilityAudit? get activeAudit => _activeAudit;
   LatLng? get customPin => _customPin;
   bool get isLocatingUser => _isLocatingUser;
@@ -115,6 +124,19 @@ class AppState extends ChangeNotifier {
   bool get shouldRecenterMap => _shouldRecenterMap;
 
   List<ParkingSpot> get parkingSpots => _parkingSpots;
+  List<AccessiblePlace> get accessiblePlaces {
+    if (_placeCategoryFilter == 'hotel') {
+      return _accessiblePlaces
+          .where((p) => p.category == AccessiblePlaceCategory.hotel)
+          .toList();
+    } else if (_placeCategoryFilter == 'building') {
+      return _accessiblePlaces
+          .where((p) => p.category != AccessiblePlaceCategory.hotel)
+          .toList();
+    }
+    return _accessiblePlaces;
+  }
+  List<AccessiblePlace> get allAccessiblePlaces => _accessiblePlaces;
   List<RouteModel> get routes => _routes;
   RouteModel? get currentRoute =>
       _routes.isNotEmpty ? _routes[_selectedRouteIndex] : null;
@@ -156,6 +178,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleAccessiblePlacesLayer() {
+    _showAccessiblePlacesLayer = !_showAccessiblePlacesLayer;
+    notifyListeners();
+  }
+
+  void setPlaceCategoryFilter(String filter) {
+    _placeCategoryFilter = filter;
+    notifyListeners();
+  }
+
   void selectRoute(int index) {
     if (index >= 0 && index < _routes.length) {
       _selectedRouteIndex = index;
@@ -172,6 +204,17 @@ class AppState extends ChangeNotifier {
 
   void selectParking(ParkingSpot? spot) {
     _selectedParking = spot;
+    if (spot != null) {
+      _selectedAccessiblePlace = null;
+    }
+    notifyListeners();
+  }
+
+  void selectAccessiblePlace(AccessiblePlace? place) {
+    _selectedAccessiblePlace = place;
+    if (place != null) {
+      _selectedParking = null;
+    }
     notifyListeners();
   }
 
@@ -373,6 +416,25 @@ class AppState extends ChangeNotifier {
   void planRouteFromParking(ParkingSpot spot) {
     _selectedParking = null;
     _startLocation = KrakowLocation(
+      id: spot.id,
+      namePl: 'Koperta: ${spot.street}',
+      nameEn: 'Disabled spot: ${spot.street}',
+      address: spot.street,
+      point: spot.location,
+      category: 'parking',
+    );
+    planRouteBetweenSelectedPoints(showLoader: true);
+  }
+
+  void planRouteToAccessiblePlace(AccessiblePlace place) {
+    _selectedAccessiblePlace = null;
+    _destinationLocation = place.toKrakowLocation();
+    planRouteBetweenSelectedPoints(showLoader: true);
+  }
+
+  void planRouteToParking(ParkingSpot spot) {
+    _selectedParking = null;
+    _destinationLocation = KrakowLocation(
       id: spot.id,
       namePl: 'Koperta: ${spot.street}',
       nameEn: 'Disabled spot: ${spot.street}',

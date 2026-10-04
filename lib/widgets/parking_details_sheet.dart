@@ -115,24 +115,50 @@ class ParkingDetailsSheet extends StatelessWidget {
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => state.planRouteFromParking(spot),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: ElevatedButton.icon(
+                  onPressed: () => state.planRouteToParking(spot),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.navigation, size: 18),
+                  label: Text(
+                    isPL ? 'Prowadź do koperty' : 'Route to parking',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
-              icon: const Icon(Icons.directions_walk, size: 20),
-              label: Text(
-                isPL ? 'Wyznacz trasę bez barier stąd' : 'Plan accessible route from here',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: ElevatedButton.icon(
+                  onPressed: () => state.planRouteFromParking(spot),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.directions_walk, size: 18),
+                  label: Text(
+                    isPL ? 'Wyrusz stąd' : 'Start here',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

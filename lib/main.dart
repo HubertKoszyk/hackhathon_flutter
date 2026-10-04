@@ -4,14 +4,13 @@ import 'package:hackhathon_flutter/widgets/scrollable_bottom_sheet.dart';
 import 'package:hackhathon_flutter/widgets/top_gradient_bar.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
+import 'widgets/accessible_place_sheet.dart';
 import 'widgets/audit_modal.dart';
 import 'widgets/live_navigation_overlay.dart';
 import 'widgets/map_view.dart';
 import 'widgets/parking_details_sheet.dart';
 import 'widgets/report_obstacle_dialog.dart';
-import 'widgets/route_card.dart';
 import 'widgets/route_result_sheet.dart';
-import 'widgets/top_bar.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,7 +98,7 @@ class MainScreen extends StatelessWidget {
             //   ),
             // ),
 
-            // Dolny panel: Karta parkingu LUB Nowy ekran wyników LUB Wyszukiwarka
+            // Dolny panel: Karta parkingu LUB Karta obiektu/hotelu LUB Ekran wyników LUB Wyszukiwarka
             if (state.selectedParking != null)
               Positioned(
                 bottom: 0,
@@ -108,6 +107,16 @@ class MainScreen extends StatelessWidget {
                 child: SafeArea(
                   top: false,
                   child: ParkingDetailsSheet(spot: state.selectedParking!),
+                ),
+              )
+            else if (state.selectedAccessiblePlace != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  top: false,
+                  child: AccessiblePlaceSheet(place: state.selectedAccessiblePlace!),
                 ),
               )
             else if (state.routes.isNotEmpty)

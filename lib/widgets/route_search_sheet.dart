@@ -213,6 +213,8 @@ class _RouteSearchSheetState extends State<RouteSearchSheet> {
 
   IconData _getCategoryIcon(String cat) {
     switch (cat) {
+      case 'hotel':
+        return Icons.hotel;
       case 'transport':
         return Icons.train;
       case 'historic':

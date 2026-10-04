@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:hackhathon_flutter/theme.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../models/accessible_place.dart';
 import '../models/transit_route_info.dart';
 import '../providers/app_state.dart';
 
@@ -98,33 +99,113 @@ class _KrakMapViewState extends State<KrakMapView> {
           markers: [
             // 1. Miejsca parkingowe dla niepełnosprawnych ("Koperty")
             if (state.showParkingLayer)
-              ...state.parkingSpots.map(
-                (spot) => Marker(
+              ...state.parkingSpots.map((spot) {
+                final isSelected = state.selectedParking?.id == spot.id;
+                return Marker(
                   point: spot.location,
-                  width: 38,
-                  height: 38,
+                  width: isSelected ? 44 : 36,
+                  height: isSelected ? 44 : 36,
                   child: GestureDetector(
                     onTap: () => state.selectParking(spot),
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(255, 0, 94, 255), // Blue
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color.fromARGB(255, 0, 77, 209),
-                          width: 2.0,
+                          color: isSelected ? Colors.white : const Color.fromARGB(255, 0, 77, 209),
+                          width: isSelected ? 3.0 : 2.0,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0284C7).withValues(alpha: isSelected ? 0.6 : 0.3),
+                            blurRadius: isSelected ? 10 : 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.accessible,
                           color: Colors.white,
-                          size: 20,
+                          size: isSelected ? 22 : 18,
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
+
+            // 1.5 Hotele i obiekty kultury / użyteczności bez barier
+            if (state.showAccessiblePlacesLayer)
+              ...state.accessiblePlaces.map((place) {
+                final isSelected = state.selectedAccessiblePlace?.id == place.id;
+                final isHotel = place.category == AccessiblePlaceCategory.hotel;
+                final primaryColor = isHotel
+                    ? const Color(0xFFD97706) // Warm Amber for hotels
+                    : const Color(0xFF7C3AED); // Purple / Violet for cultural venues
+                final borderColor = isHotel
+                    ? const Color(0xFFFBBF24)
+                    : const Color(0xFFA78BFA);
+
+                return Marker(
+                  point: place.location,
+                  width: isSelected ? 48 : 40,
+                  height: isSelected ? 48 : 40,
+                  child: GestureDetector(
+                    onTap: () => state.selectAccessiblePlace(place),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? Colors.white : borderColor,
+                          width: isSelected ? 3.0 : 2.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha: isSelected ? 0.65 : 0.35),
+                            blurRadius: isSelected ? 12 : 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            isHotel
+                                ? Icons.hotel
+                                : (place.category == AccessiblePlaceCategory.publicBuilding
+                                    ? Icons.apartment
+                                    : Icons.account_balance),
+                            color: Colors.white,
+                            size: isSelected ? 22 : 18,
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1),
+                              ),
+                              child: const Icon(
+                                Icons.accessible,
+                                color: Colors.white,
+                                size: 8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
 
             // 2. Punkty startu i mety aktywnej trasy
             if (activeRoute != null && activeRoute.coordinates.isNotEmpty) ...[
