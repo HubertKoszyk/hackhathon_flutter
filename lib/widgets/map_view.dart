@@ -51,7 +51,8 @@ class _KrakMapViewState extends State<KrakMapView> {
         // Podkład mapy OpenStreetMap (Kraków)
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'pl.krakow.krakaccess',
+          userAgentPackageName: 'com.example.hackhathon_flutter',
+          maxZoom: 19,
         ),
 
         // Warstwa tras (Polylines)
