@@ -70,13 +70,15 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
     final isPL = state.language == 'pl';
 
     return Dialog(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         side: BorderSide(
-          color: _isSuccess ? const Color(0xFF10B981) : Colors.white12,
+          color: _isSuccess ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: 1.2,
         ),
       ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -89,12 +91,12 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF0EA5E9)],
+                      colors: [Color(0xFF0048FF), Color(0xFF0EA5E9)],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
-                    Icons.auto_awesome,
+                    Icons.auto_awesome_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
@@ -107,9 +109,10 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                       const Text(
                         'Google Gemini API',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'PlusJakartaSans',
                         ),
                       ),
                       Text(
@@ -117,16 +120,29 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                             ? 'Silnik AI dla NavAble'
                             : 'AI Engine for NavAble',
                         style: const TextStyle(
-                          color: Color(0xFF38BDF8),
-                          fontSize: 11,
+                          color: Color(0xFF0048FF),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () => Navigator.of(context).pop(),
+                InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF475569),
+                      size: 18,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -136,9 +152,9 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                   ? 'Wklej swój bezpłatny klucz API z Google AI Studio, aby aplikacja na żywo analizowała zdjęcia Street View i zgłoszenia mieszkańców:'
                   : 'Paste your free Google AI Studio API key for real-time vision analysis:',
               style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                height: 1.4,
+                color: Color(0xFF475569),
+                fontSize: 12.5,
+                height: 1.45,
               ),
             ),
             const SizedBox(height: 12),
@@ -146,31 +162,39 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
               controller: _controller,
               obscureText: true,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF0F172A),
                 fontSize: 13,
                 fontFamily: 'monospace',
               ),
               decoration: InputDecoration(
                 hintText: 'AIzaSy...',
-                hintStyle: const TextStyle(color: Colors.white30),
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                 filled: true,
-                fillColor: const Color(0xFF1E293B),
+                fillColor: const Color(0xFFF8FAFC),
                 prefixIcon: const Icon(
-                  Icons.key,
-                  color: Color(0xFF38BDF8),
+                  Icons.key_rounded,
+                  color: Color(0xFF0048FF),
                   size: 18,
                 ),
                 suffixIcon: IconButton(
                   icon: const Icon(
-                    Icons.clear,
-                    color: Colors.white38,
+                    Icons.clear_rounded,
+                    color: Color(0xFF94A3B8),
                     size: 18,
                   ),
                   onPressed: () => _controller.clear(),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF0048FF), width: 1.5),
                 ),
               ),
             ),
@@ -180,39 +204,40 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: _isSuccess
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : const Color(0xFFEF4444).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                      ? const Color(0xFFDCFCE7)
+                      : const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isSuccess
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
+                        ? const Color(0xFFBBF7D0)
+                        : const Color(0xFFFECACA),
                   ),
                 ),
                 child: Text(
                   _statusMessage!,
                   style: TextStyle(
                     color: _isSuccess
-                        ? const Color(0xFF34D399)
-                        : const Color(0xFFF87171),
-                    fontSize: 11,
+                        ? const Color(0xFF15803D)
+                        : const Color(0xFFB91C1C),
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(11),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
                   const Icon(
-                    Icons.info_outline,
-                    color: Colors.white54,
+                    Icons.info_outline_rounded,
+                    color: Color(0xFF0048FF),
                     size: 16,
                   ),
                   const SizedBox(width: 8),
@@ -222,8 +247,8 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                           ? 'Darmowy klucz wygenerujesz na: aistudio.google.com (1500 zapytań/dzień gratis).'
                           : 'Get a free key at: aistudio.google.com (1500 req/day free).',
                       style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 10,
+                        color: Color(0xFF64748B),
+                        fontSize: 10.5,
                       ),
                     ),
                   ),
@@ -237,11 +262,12 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                   child: ElevatedButton.icon(
                     onPressed: _isTesting ? null : _verifyAndSave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0284C7),
+                      backgroundColor: const Color(0xFF0048FF),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     icon: _isTesting
@@ -253,14 +279,15 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.check_circle_outline, size: 18),
+                        : const Icon(Icons.check_circle_rounded, size: 18),
                     label: Text(
                       _isTesting
                           ? (isPL ? 'Weryfikacja...' : 'Verifying...')
                           : (isPL ? 'Przetestuj i zapisz' : 'Test & Save Key'),
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        fontFamily: 'PlusJakartaSans',
                       ),
                     ),
                   ),

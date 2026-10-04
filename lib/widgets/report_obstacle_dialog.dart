@@ -40,34 +40,51 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
     final isPL = state.language == 'pl';
 
     return Dialog(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Colors.white12),
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
       ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         child: _submitted
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF34D399), size: 54),
-                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFDCFCE7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF16A34A),
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     isPL ? 'Zgłoszenie przetworzone przez AI!' : 'Report Processed by AI!',
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'PlusJakartaSans',
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     isPL
                         ? 'Punkt został uwzględniony w algorytmie omijania przeszkód dla Krakowa.'
                         : 'Hazard added to the real-time obstacle avoidance routing.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               )
@@ -78,12 +95,17 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
                         ),
-                        child: const Icon(Icons.camera_alt, color: Color(0xFFF59E0B), size: 22),
+                        child: const Icon(
+                          Icons.camera_alt_rounded,
+                          color: Color(0xFFD97706),
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -93,26 +115,53 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                             Text(
                               isPL ? 'Zgłoś barierę miejską' : 'Report Urban Barrier',
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'PlusJakartaSans',
                               ),
                             ),
                             Text(
-                              isPL ? 'Zero pracy dla urzędników (AI Audit)' : 'Zero city maintenance needed',
-                              style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11),
+                              isPL
+                                  ? 'Wizualna weryfikacja przez AI'
+                                  : 'Visual verification by AI',
+                              style: const TextStyle(
+                                color: Color(0xFF0048FF),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Color(0xFF475569),
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    isPL ? 'Typ przeszkody:' : 'Barrier Type:',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    isPL ? 'Wybierz typ przeszkody:' : 'Select Barrier Type:',
+                    style: const TextStyle(
+                      color: Color(0xFF475569),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -138,17 +187,25 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _descController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
                     decoration: InputDecoration(
                       hintText: isPL
                           ? 'Np. ul. Grodzka – roboty drogowe, brak przejścia...'
                           : 'E.g., Grodzka St. – roadworks, no wheelchair passage...',
-                      hintStyle: const TextStyle(color: Colors.white38),
+                      hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                       filled: true,
-                      fillColor: const Color(0xFF1E293B),
+                      fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFF0048FF), width: 1.5),
                       ),
                     ),
                     maxLines: 2,
@@ -159,11 +216,12 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                     child: ElevatedButton.icon(
                       onPressed: _isAnalyzingWithAI ? null : _submitReport,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0284C7),
+                        backgroundColor: const Color(0xFF0048FF),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       icon: _isAnalyzingWithAI
@@ -175,12 +233,16 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.auto_awesome, size: 18),
+                          : const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: Text(
                         _isAnalyzingWithAI
                             ? (isPL ? 'Analiza AI w toku...' : 'AI Analyzing...')
                             : (isPL ? 'Wyślij i przeanalizuj AI' : 'Submit & Analyze with AI'),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                          fontFamily: 'PlusJakartaSans',
+                        ),
                       ),
                     ),
                   ),
@@ -193,10 +255,21 @@ class _ReportObstacleDialogState extends State<ReportObstacleDialog> {
   Widget _buildChip({required String label, required String val}) {
     final isSelected = _selectedBarrierType == val;
     return ChoiceChip(
-      label: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.white70, fontSize: 11)),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : const Color(0xFF334155),
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
       selected: isSelected,
-      selectedColor: const Color(0xFF0284C7),
-      backgroundColor: const Color(0xFF1E293B),
+      selectedColor: const Color(0xFF0048FF),
+      backgroundColor: const Color(0xFFF1F5F9),
+      side: BorderSide(
+        color: isSelected ? const Color(0xFF0048FF) : const Color(0xFFE2E8F0),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (_) => setState(() => _selectedBarrierType = val),
     );
   }

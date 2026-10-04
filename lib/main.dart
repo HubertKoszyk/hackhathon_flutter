@@ -5,6 +5,7 @@ import 'package:hackhathon_flutter/widgets/top_gradient_bar.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'widgets/accessible_place_sheet.dart';
+import 'widgets/app_tutorial_modal.dart';
 import 'widgets/audit_modal.dart';
 import 'widgets/live_navigation_overlay.dart';
 import 'widgets/map_view.dart';
@@ -31,27 +32,41 @@ class KrakAccessApp extends StatelessWidget {
       title: 'NavAble',
       debugShowCheckedModeBanner: false,
       theme: materialLightTheme,
-      // theme: ThemeData(
-      //   useMaterial3: true,
-      //   brightness: Brightness.dark,
-      //   scaffoldBackgroundColor: const Color(0xFF0F172A),
-      //   colorScheme: const ColorScheme.dark(
-      //     primary: Color(0xFF10B981), // Emerald
-      //     secondary: Color(0xFF0284C7), // Sky Blue
-      //     surface: Color(0xFF1E293B),
-      //   ),
-      // ),
       home: const MainScreen(),
     );
   }
 }
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  bool _checkedTutorial = false;
+
+  void _checkFirstLaunchTutorial() {
+    if (_checkedTutorial) return;
+    final state = context.read<AppState>();
+    if (state.shouldShowTutorial) {
+      _checkedTutorial = true;
+      state.dismissTutorialFlag();
+      AppTutorialModal.show(context, isFirstLaunch: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+
+    // Sprawdź czy pokazać samouczek powitalny
+    if (state.shouldShowTutorial && !_checkedTutorial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _checkFirstLaunchTutorial();
+      });
+    }
 
     return Scaffold(
       body: Stack(

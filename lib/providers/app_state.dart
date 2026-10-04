@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_translations.dart';
 import '../models/accessibility_audit.dart';
 import '../models/accessible_place.dart';
@@ -27,6 +28,10 @@ class AppState extends ChangeNotifier {
   AccessiblePlace? _selectedAccessiblePlace;
   AccessibilityAudit? _activeAudit;
   LatLng? _customPin;
+
+  // Samouczek / Tutorial (Onboarding)
+  bool _hasSeenTutorial = false;
+  bool _shouldShowTutorial = false;
 
   // GPS i bieżąca lokalizacja
   bool _isLocatingUser = false;
@@ -75,9 +80,42 @@ class AppState extends ChangeNotifier {
     _accessiblePlaces = KrakowDataService.getAccessiblePlaces();
     _routes = [];
     useCurrentLocationAsStart(calculateRoute: false);
+    initTutorialStatus();
+  }
+
+  Future<void> initTutorialStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _hasSeenTutorial = prefs.getBool('navable_tutorial_seen') ?? false;
+      if (!_hasSeenTutorial) {
+        _shouldShowTutorial = true;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> markTutorialAsSeen() async {
+    _hasSeenTutorial = true;
+    _shouldShowTutorial = false;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('navable_tutorial_seen', true);
+    } catch (_) {}
+  }
+
+  void openTutorial() {
+    _shouldShowTutorial = true;
+    notifyListeners();
+  }
+
+  void dismissTutorialFlag() {
+    _shouldShowTutorial = false;
   }
 
   // Getters
+  bool get hasSeenTutorial => _hasSeenTutorial;
+  bool get shouldShowTutorial => _shouldShowTutorial;
   String get language => _language;
   MobilityProfile get profile => _profile;
   bool get showParkingLayer => _showParkingLayer;
@@ -429,6 +467,12 @@ class AppState extends ChangeNotifier {
   void planRouteToAccessiblePlace(AccessiblePlace place) {
     _selectedAccessiblePlace = null;
     _destinationLocation = place.toKrakowLocation();
+    planRouteBetweenSelectedPoints(showLoader: true);
+  }
+
+  void planRouteFromAccessiblePlace(AccessiblePlace place) {
+    _selectedAccessiblePlace = null;
+    _startLocation = place.toKrakowLocation();
     planRouteBetweenSelectedPoints(showLoader: true);
   }
 

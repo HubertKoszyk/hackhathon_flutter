@@ -20,7 +20,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Nie można otworzyć linku: $urlString'),
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: const Color(0xFF0F172A),
           ),
         );
       }
@@ -45,7 +45,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Numer telefonu: $phone'),
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: const Color(0xFF0F172A),
           ),
         );
       }
@@ -54,7 +54,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Numer telefonu: $phone'),
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: const Color(0xFF0F172A),
           ),
         );
       }
@@ -67,27 +67,24 @@ class AccessiblePlaceSheet extends StatelessWidget {
     final isPL = state.language == 'pl';
     final isHotel = place.category == AccessiblePlaceCategory.hotel;
 
-    final categoryColor = isHotel
-        ? const Color(0xFFF59E0B) // Amber for hotels
-        : const Color(0xFF8B5CF6); // Violet/Purple for cultural/public buildings
+    final primaryThemeColor = isHotel
+        ? const Color(0xFFD97706) // Rich amber
+        : const Color(0xFF7C3AED); // Modern violet
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.78,
+        maxHeight: MediaQuery.of(context).size.height * 0.80,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: categoryColor.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.55),
-            blurRadius: 24,
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 28,
             offset: const Offset(0, 8),
           ),
         ],
@@ -97,6 +94,19 @@ class AccessiblePlaceSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Pasek uchwytu (drag handle)
+            Center(
+              child: Container(
+                width: 44,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+
             // Nagłówek: Ikona, Kategoria, Nazwa i Przycisk zamknięcia
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,20 +114,26 @@ class AccessiblePlaceSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: categoryColor.withValues(alpha: 0.2),
+                    color: isHotel
+                        ? const Color(0xFFFEF3C7)
+                        : const Color(0xFFF3E8FF),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: categoryColor),
+                    border: Border.all(
+                      color: isHotel
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFFE9D5FF),
+                    ),
                   ),
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
                       Icon(
                         isHotel
-                            ? Icons.hotel
+                            ? Icons.hotel_rounded
                             : (place.category == AccessiblePlaceCategory.publicBuilding
-                                ? Icons.apartment
-                                : Icons.account_balance),
-                        color: categoryColor,
+                                ? Icons.apartment_rounded
+                                : Icons.account_balance_rounded),
+                        color: primaryThemeColor,
                         size: 26,
                       ),
                       Positioned(
@@ -130,7 +146,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.accessible,
+                            Icons.accessible_rounded,
                             color: Colors.white,
                             size: 11,
                           ),
@@ -152,46 +168,55 @@ class AccessiblePlaceSheet extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
-                              vertical: 3,
+                              vertical: 3.5,
                             ),
                             decoration: BoxDecoration(
-                              color: categoryColor.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
+                              color: isHotel
+                                  ? const Color(0xFFFEF3C7)
+                                  : const Color(0xFFF3E8FF),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isHotel
+                                    ? const Color(0xFFFDE68A)
+                                    : const Color(0xFFE9D5FF),
+                              ),
                             ),
                             child: Text(
                               isPL ? place.categoryLabelPl : place.categoryLabelEn,
                               style: TextStyle(
-                                color: categoryColor,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                                color: primaryThemeColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'PlusJakartaSans',
                               ),
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2.5,
+                              horizontal: 7,
+                              vertical: 3.5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFBBF7D0)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.verified,
-                                  color: Color(0xFF34D399),
-                                  size: 11,
+                                  Icons.verified_rounded,
+                                  color: Color(0xFF16A34A),
+                                  size: 12,
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(width: 3.5),
                                 Text(
                                   '${place.accessibilityScore}/100',
                                   style: const TextStyle(
-                                    color: Color(0xFF34D399),
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF15803D),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'PlusJakartaSans',
                                   ),
                                 ),
                               ],
@@ -199,31 +224,33 @@ class AccessiblePlaceSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         place.name,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
+                          color: Color(0xFF0F172A),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'PlusJakartaSans',
+                          height: 1.25,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(
-                            Icons.location_on,
-                            color: Colors.white60,
-                            size: 13,
+                            Icons.location_on_rounded,
+                            color: Color(0xFF64748B),
+                            size: 14,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               '${place.address} (${place.district})',
                               style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -234,11 +261,21 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70, size: 22),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => state.selectAccessiblePlace(null),
+                InkWell(
+                  onTap: () => state.selectAccessiblePlace(null),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF475569),
+                      size: 20,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -252,58 +289,58 @@ class AccessiblePlaceSheet extends StatelessWidget {
               children: [
                 if (place.hasWheelchairAccess)
                   _buildFeatureBadge(
-                    icon: Icons.accessible,
+                    icon: Icons.accessible_rounded,
                     label: isPL ? 'Brak barier / Winda' : 'Step-free / Lift',
-                    color: const Color(0xFF38BDF8),
+                    iconColor: const Color(0xFF0284C7),
                   ),
                 if (place.hasHearingLoop)
                   _buildFeatureBadge(
-                    icon: Icons.hearing,
+                    icon: Icons.hearing_rounded,
                     label: isPL ? 'Pętla indukcyjna' : 'Hearing loop',
-                    color: const Color(0xFFA78BFA),
+                    iconColor: const Color(0xFF7C3AED),
                   ),
                 if (place.hasBrailleOrAudio)
                   _buildFeatureBadge(
-                    icon: Icons.visibility,
+                    icon: Icons.visibility_rounded,
                     label: isPL ? 'Braille / Audiodeskrypcja' : 'Braille / Audio',
-                    color: const Color(0xFFFBBF24),
+                    iconColor: const Color(0xFFD97706),
                   ),
                 if (place.hasAdaptedRooms)
                   _buildFeatureBadge(
-                    icon: Icons.king_bed,
-                    label: isPL ? 'Pokoje z prysznicem roll-in' : 'Roll-in shower rooms',
-                    color: const Color(0xFF34D399),
+                    icon: Icons.king_bed_rounded,
+                    label: isPL ? 'Pokoje roll-in shower' : 'Roll-in shower rooms',
+                    iconColor: const Color(0xFF059669),
                   ),
                 if (place.hasAdaptedRestroom)
                   _buildFeatureBadge(
-                    icon: Icons.wc,
+                    icon: Icons.wc_rounded,
                     label: isPL ? 'Toaleta PwN' : 'Accessible WC',
-                    color: const Color(0xFF60A5FA),
+                    iconColor: const Color(0xFF2563EB),
                   ),
                 if (place.hasDedicatedParking)
                   _buildFeatureBadge(
-                    icon: Icons.local_parking,
+                    icon: Icons.local_parking_rounded,
                     label: isPL ? 'Koperta P-24' : 'Disabled parking',
-                    color: const Color(0xFF0284C7),
+                    iconColor: const Color(0xFF0048FF),
                   ),
                 if (place.hasAssistanceDogWelcome)
                   _buildFeatureBadge(
-                    icon: Icons.pets,
+                    icon: Icons.pets_rounded,
                     label: isPL ? 'Pies asystujący' : 'Service dog welcome',
-                    color: const Color(0xFFF472B6),
+                    iconColor: const Color(0xFFDB2777),
                   ),
               ],
             ),
 
             const SizedBox(height: 12),
 
-            // Opis obiektu
+            // Opis obiektu i rozwiązania dostępności
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,41 +348,48 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   Text(
                     isPL ? place.descriptionPl : place.descriptionEn,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: Color(0xFF334155),
                       fontSize: 12.5,
-                      height: 1.4,
+                      height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     isPL
                         ? 'Kluczowe rozwiązania dostępności:'
                         : 'Key accessibility highlights:',
                     style: TextStyle(
-                      color: categoryColor,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
+                      color: primaryThemeColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'PlusJakartaSans',
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   for (final item in (isPL
                       ? place.accessibilityHighlightsPl
                       : place.accessibilityHighlightsEn).take(3))
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            '• ',
-                            style: TextStyle(color: Color(0xFF10B981), fontSize: 12),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Icon(
+                              Icons.check_circle_rounded,
+                              color: Color(0xFF10B981),
+                              size: 14,
+                            ),
                           ),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               item,
                               style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 11.5,
+                                color: Color(0xFF475569),
+                                fontSize: 12,
+                                height: 1.3,
                               ),
                             ),
                           ),
@@ -359,15 +403,26 @@ class AccessiblePlaceSheet extends StatelessWidget {
             const SizedBox(height: 14),
 
             // =================================================================
-            // SEKCJA SOCIAL MEDIA & KONTAKT (Główny wymóg użytkownika!)
+            // SEKCJA SOCIAL MEDIA & KONTAKT
             // =================================================================
-            Text(
-              isPL ? 'Social Media & Oficjalne Linki:' : 'Social Media & Official Links:',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                const Icon(
+                  Icons.link_rounded,
+                  color: Color(0xFF0048FF),
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isPL ? 'Social Media i Kontakt:' : 'Social Media & Contact:',
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'PlusJakartaSans',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
 
@@ -378,7 +433,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   Expanded(
                     child: _buildSocialButton(
                       context: context,
-                      icon: Icons.camera_alt,
+                      icon: Icons.camera_alt_rounded,
                       label: 'Instagram',
                       subtitle: place.instagramHandle ?? 'Profil',
                       gradientColors: const [
@@ -386,6 +441,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                         Color(0xFFFD1D1D),
                         Color(0xFFFCB045),
                       ],
+                      isGradient: true,
                       onTap: () => _launch(context, place.instagramUrl!),
                     ),
                   ),
@@ -397,7 +453,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   Expanded(
                     child: _buildSocialButton(
                       context: context,
-                      icon: Icons.facebook,
+                      icon: Icons.facebook_rounded,
                       label: 'Facebook',
                       subtitle: isPL ? 'Strona FB' : 'FB Page',
                       backgroundColor: const Color(0xFF1877F2),
@@ -414,10 +470,10 @@ class AccessiblePlaceSheet extends StatelessWidget {
                 Expanded(
                   child: _buildSocialButton(
                     context: context,
-                    icon: Icons.language,
+                    icon: Icons.language_rounded,
                     label: isPL ? 'Strona WWW' : 'Website',
                     subtitle: isPL ? 'Rezerwacja / Info' : 'Official Portal',
-                    backgroundColor: const Color(0xFF0284C7),
+                    backgroundColor: const Color(0xFF0048FF),
                     onTap: () => _launch(context, place.websiteUrl),
                   ),
                 ),
@@ -428,7 +484,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   Expanded(
                     child: _buildSocialButton(
                       context: context,
-                      icon: Icons.phone,
+                      icon: Icons.phone_rounded,
                       label: isPL ? 'Telefon' : 'Phone',
                       subtitle: place.phoneNumber!,
                       backgroundColor: const Color(0xFF059669),
@@ -440,7 +496,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Przyciski akcji: "Wyznacz trasę bez barier tutaj" oraz "Wyrusz stąd"
+            // Przyciski akcji: "Wyznacz trasę bez barier" oraz "Wyrusz stąd"
             Row(
               children: [
                 Expanded(
@@ -448,23 +504,22 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => state.planRouteToAccessiblePlace(place),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: const Color(0xFF0048FF),
                       foregroundColor: Colors.white,
+                      elevation: 2,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    icon: const Icon(Icons.directions_walk, size: 20),
+                    icon: const Icon(Icons.alt_route_rounded, size: 19),
                     label: Text(
-                      isPL
-                          ? 'Trasa bez barier'
-                          : 'Accessible route',
+                      isPL ? 'Trasa bez barier' : 'Accessible route',
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         fontSize: 13.5,
+                        fontFamily: 'PlusJakartaSans',
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -472,37 +527,24 @@ class AccessiblePlaceSheet extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      state.setStartLocation(place.toKrakowLocation());
-                      state.selectAccessiblePlace(null);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isPL
-                                ? 'Ustawiono jako punkt startowy: ${place.name}'
-                                : 'Set as start point: ${place.name}',
-                          ),
-                          backgroundColor: const Color(0xFF0F172A),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onPressed: () => state.planRouteFromAccessiblePlace(place),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
+                      foregroundColor: const Color(0xFF0048FF),
+                      side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.2),
+                      backgroundColor: const Color(0xFFEFF6FF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    icon: const Icon(Icons.trip_origin, size: 18),
+                    icon: const Icon(Icons.trip_origin_rounded, size: 16),
                     label: Text(
-                      isPL ? 'Wyrusz stąd' : 'Start here',
+                      isPL ? 'Start stąd' : 'Start here',
                       style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontFamily: 'PlusJakartaSans',
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -517,25 +559,25 @@ class AccessiblePlaceSheet extends StatelessWidget {
   Widget _buildFeatureBadge({
     required IconData icon,
     required String label,
-    required Color color,
+    required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+      padding: const EdgeInsets.symmetric(horizontal: 8.5, vertical: 4.5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, color: iconColor, size: 13),
+          const SizedBox(width: 4.5),
           Text(
             label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10.5,
+            style: const TextStyle(
+              color: Color(0xFF1E293B),
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -551,38 +593,45 @@ class AccessiblePlaceSheet extends StatelessWidget {
     required String subtitle,
     Color? backgroundColor,
     List<Color>? gradientColors,
+    bool isGradient = false,
     required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
-            color: gradientColors == null
-                ? (backgroundColor ?? const Color(0xFF1E293B))
-                : null,
-            gradient: gradientColors != null
+            color: isGradient ? null : backgroundColor,
+            gradient: isGradient
                 ? LinearGradient(
-                    colors: gradientColors,
+                    colors: gradientColors!,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
                 : null,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: (isGradient ? gradientColors!.first : backgroundColor!)
+                    .withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white, size: 18),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: Colors.white, size: 16),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -594,22 +643,28 @@ class AccessiblePlaceSheet extends StatelessWidget {
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'PlusJakartaSans',
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_outward, color: Colors.white70, size: 13),
+              const Icon(
+                Icons.arrow_outward_rounded,
+                color: Colors.white70,
+                size: 13,
+              ),
             ],
           ),
         ),
