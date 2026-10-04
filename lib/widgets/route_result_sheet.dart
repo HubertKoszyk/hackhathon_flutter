@@ -485,20 +485,24 @@ class RouteResultSheet extends StatelessWidget {
       }
     }
 
+    final isHighContrast = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10.0),
       decoration: BoxDecoration(
         color: isSelected
             ? (isStandard
-                ? const Color(0xFFDC2626).withValues(alpha: 0.08)
-                : theme.colorScheme.primaryContainer.withValues(alpha: 0.45))
-            : kColorGrayScheme.primary,
+                ? const Color(0xFFDC2626).withValues(alpha: isHighContrast ? 0.3 : 0.08)
+                : theme.colorScheme.primaryContainer.withValues(alpha: isHighContrast ? 0.8 : 0.45))
+            : (isHighContrast ? const Color(0xFF141414) : kColorGrayScheme.primary),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
           color: isSelected
               ? selectionColor
-              : theme.colorScheme.outline.withValues(alpha: 0.4),
-          width: isSelected ? 2.0 : 1.0,
+              : (isHighContrast
+                  ? const Color(0xFFFACC15).withValues(alpha: 0.6)
+                  : theme.colorScheme.outline.withValues(alpha: 0.4)),
+          width: isSelected ? 2.5 : 1.2,
         ),
       ),
       child: Material(
@@ -649,6 +653,7 @@ class RouteResultSheet extends StatelessWidget {
     required bool isPL,
     required bool isUK,
   }) {
+    final isHighContrast = theme.brightness == Brightness.dark;
     final isStandard = route.type == RouteType.standard ||
         (!route.isTransit && route.type != RouteType.accessible);
 
@@ -701,8 +706,15 @@ class RouteResultSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: kColorGrayScheme.primary,
+                    color: isHighContrast
+                        ? const Color(0xFF1E1E1E)
+                        : kColorGrayScheme.primary,
                     borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isHighContrast
+                          ? const Color(0xFFFACC15).withValues(alpha: 0.5)
+                          : Colors.transparent,
+                    ),
                   ),
                   child: Text(
                     route.stairsAvoided > 0
@@ -973,6 +985,7 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isHighContrast = theme.brightness == Brightness.dark;
     final state = context.watch<AppState>();
     final isPL = state.language == 'pl';
     final isUK = state.language == 'uk';
@@ -1072,10 +1085,13 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: kColorGrayScheme.surface,
+                  color: isHighContrast ? const Color(0xFF141414) : kColorGrayScheme.surface,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                    color: isHighContrast
+                        ? const Color(0xFFFACC15)
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                    width: isHighContrast ? 1.8 : 1.0,
                   ),
                 ),
                 child: TextField(
@@ -1084,17 +1100,28 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
+                    color: isHighContrast ? Colors.white : const Color(0xFF0F172A),
                   ),
                   decoration: InputDecoration(
                     hintText: searchHint,
                     hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                      color: isHighContrast
+                          ? const Color(0xFFCBD5E1)
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                       fontWeight: FontWeight.normal,
                     ),
-                    prefixIcon: const Icon(Icons.search, size: 20),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 20,
+                      color: isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.primary,
+                    ),
                     suffixIcon: _controller.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: Icon(
+                              Icons.clear,
+                              size: 18,
+                              color: isHighContrast ? Colors.white : null,
+                            ),
                             onPressed: () {
                               _controller.clear();
                               setState(() => _query = '');

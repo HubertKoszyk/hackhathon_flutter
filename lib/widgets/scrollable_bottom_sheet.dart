@@ -389,9 +389,12 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
     final isInputFocused =
         _startFocusNode.hasFocus || _destinationFocusNode.hasFocus;
+    final textScale = state.textScale;
+    final extraScaleHeight = textScale > 1.0 ? (textScale - 1.0) * 120.0 : 0.0;
+    final dynamicBaseCardHeight = _baseCardHeight + extraScaleHeight;
     final currentCardHeight = isInputFocused
-        ? (_baseCardHeight + _suggestionsBoxHeight)
-        : _baseCardHeight;
+        ? (dynamicBaseCardHeight + _suggestionsBoxHeight)
+        : dynamicBaseCardHeight;
     final currentTotalHeight = currentCardHeight + _bottomSpacing;
 
     return DraggableScrollableSheet(
@@ -543,6 +546,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     bool isPL,
     bool isUK,
   ) {
+    final isHighContrast = theme.brightness == Brightness.dark;
     final isStartFilled = _startController.text.trim().isNotEmpty;
     final isDestinationFilled = _destinationController.text.trim().isNotEmpty;
     final canSearch =
@@ -552,12 +556,15 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
         !state.isAnalyzingRoute;
 
     return Container(
-      height: cardHeight,
+      constraints: BoxConstraints(minHeight: cardHeight),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(color: theme.colorScheme.outline, width: 1.5),
+        border: Border.all(
+          color: theme.colorScheme.outline,
+          width: isHighContrast ? 2.0 : 1.5,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -567,28 +574,37 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.route,
-                    size: 24,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isPL
-                        ? 'Wyszukaj trasę'
-                        : (isUK ? 'Пошук маршруту' : 'Search route'),
-                    style: theme.textTheme.displaySmall,
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.route,
+                      size: 24,
+                      color: isHighContrast
+                          ? const Color(0xFFFACC15)
+                          : theme.colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        isPL
+                            ? 'Wyszukaj trasę'
+                            : (isUK ? 'Пошук маршруту' : 'Search route'),
+                        style: theme.textTheme.displaySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: Icon(
                   Icons.tune,
                   size: 20.0,
-                  color: theme.colorScheme.onSurface,
+                  color: isHighContrast
+                      ? const Color(0xFFFACC15)
+                      : theme.colorScheme.onSurface,
                 ),
                 tooltip: isPL
                     ? 'Filtry dostępności'
@@ -722,11 +738,14 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
           // Przycisk "Szukaj" (nieaktywny dopóki oba pola nie są wypełnione)
           SizedBox(
-            height: 44,
+            height: 44 + (state.textScale > 1.0 ? (state.textScale - 1.0) * 16 : 0),
             child: ElevatedButton.icon(
               onPressed: canSearch ? () => _onSearchButtonPressed(state) : null,
               icon: const Icon(Icons.search, size: 18),
-              label: Text(isPL ? 'Szukaj' : (isUK ? 'Знайти' : 'Search')),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(isPL ? 'Szukaj' : (isUK ? 'Знайти' : 'Search')),
+              ),
             ),
           ),
         ],
@@ -734,7 +753,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     );
   }
 
-  // Realne pole formularza TextField stylizowane zgodnie z motywem
+  // Realne pole formularza TextField stylizowane zgodnie z motywem (WCAG compliant)
   Widget _buildInputField({
     required BuildContext context,
     required TextEditingController controller,
@@ -745,32 +764,45 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     ValueChanged<String>? onSubmitted,
   }) {
     final theme = Theme.of(context);
+    final isHighContrast = theme.brightness == Brightness.dark;
+
+    final inputBg = isHighContrast ? const Color(0xFF141414) : kColorGrayScheme.primary;
+    final inputBorderColor = isHighContrast ? const Color(0xFFFACC15) : const Color(0xFFCBD5E1);
+    final textColor = isHighContrast ? Colors.white : const Color(0xFF0F172A);
+    final hintColor = isHighContrast ? const Color(0xFFCBD5E1) : const Color(0xFF64748B);
+    final iconColor = isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.onSurface;
 
     return Container(
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
-        color: kColorGrayScheme.primary,
+        color: inputBg,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: inputBorderColor,
+          width: isHighContrast ? 1.8 : 1.0,
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.onSurface),
+          Icon(icon, size: 18, color: iconColor),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
               focusNode: focusNode,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
+                color: textColor,
+                fontWeight: isHighContrast ? FontWeight.w600 : FontWeight.w500,
               ),
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 2),
                 hintText: hint,
                 hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: hintColor,
                 ),
               ),
               onSubmitted: onSubmitted,
@@ -1009,7 +1041,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
         // Horyzontalna lista kafelków
         SizedBox(
-          height: 148,
+          height: 148 + (state.textScale > 1.0 ? (state.textScale - 1.0) * 85 : 0),
           child: _buildPlacesCardsList(
             context,
             theme,
@@ -1111,6 +1143,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
         ? const Color(0xFFF59E0B)
         : const Color(0xFF8B5CF6);
 
+    final isHighContrast = theme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -1118,14 +1152,16 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 245,
+        width: 245 + (state.textScale > 1.0 ? (state.textScale - 1.0) * 100 : 0),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: badgeColor.withValues(alpha: 0.4),
-            width: 1.2,
+            color: isHighContrast
+                ? const Color(0xFFFACC15)
+                : badgeColor.withValues(alpha: 0.4),
+            width: isHighContrast ? 1.8 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
@@ -1290,6 +1326,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
   ) {
     const badgeColor = Color(0xFF0284C7);
 
+    final isHighContrast = theme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -1297,14 +1335,16 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 245,
+        width: 245 + (state.textScale > 1.0 ? (state.textScale - 1.0) * 100 : 0),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: badgeColor.withValues(alpha: 0.4),
-            width: 1.2,
+            color: isHighContrast
+                ? const Color(0xFFFACC15)
+                : badgeColor.withValues(alpha: 0.4),
+            width: isHighContrast ? 1.8 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
@@ -1630,15 +1670,21 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     final isPL = state.language == 'pl';
     final isEN = state.language == 'en';
     final isUK = state.language == 'uk';
+    final isHighContrast = theme.brightness == Brightness.dark;
+
+    final bgColor = isHighContrast ? const Color(0xFF141414) : kColorGrayScheme.primary;
+    final borderColor = isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.outline.withValues(alpha: 0.5);
+    final textColor = isHighContrast ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.85);
+    final iconColor = isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.onSurface.withValues(alpha: 0.75);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: kColorGrayScheme.primary,
+        color: bgColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.5),
-          width: 1.0,
+          color: borderColor,
+          width: isHighContrast ? 1.8 : 1.0,
         ),
       ),
       child: Row(
@@ -1650,7 +1696,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
               Icon(
                 Icons.language,
                 size: 20,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                color: iconColor,
               ),
               const SizedBox(width: 8),
               Text(
@@ -1658,7 +1704,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                  color: textColor,
                 ),
               ),
             ],
@@ -1676,14 +1722,14 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   ),
                   decoration: BoxDecoration(
                     color: isPL
-                        ? theme.colorScheme.primaryContainer
+                        ? (isHighContrast ? const Color(0xFF2E2400) : theme.colorScheme.primaryContainer)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isPL
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      width: isPL ? 1.5 : 1.0,
+                          ? (isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.primary)
+                          : (isHighContrast ? Colors.white24 : theme.colorScheme.outline.withValues(alpha: 0.3)),
+                      width: isPL ? 1.8 : 1.0,
                     ),
                   ),
                   child: const Text('🇵🇱', style: TextStyle(fontSize: 18)),
@@ -1700,14 +1746,14 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   ),
                   decoration: BoxDecoration(
                     color: isEN
-                        ? theme.colorScheme.primaryContainer
+                        ? (isHighContrast ? const Color(0xFF2E2400) : theme.colorScheme.primaryContainer)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isEN
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      width: isEN ? 1.5 : 1.0,
+                          ? (isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.primary)
+                          : (isHighContrast ? Colors.white24 : theme.colorScheme.outline.withValues(alpha: 0.3)),
+                      width: isEN ? 1.8 : 1.0,
                     ),
                   ),
                   child: const Text('🇬🇧', style: TextStyle(fontSize: 18)),
@@ -1724,14 +1770,14 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   ),
                   decoration: BoxDecoration(
                     color: isUK
-                        ? theme.colorScheme.primaryContainer
+                        ? (isHighContrast ? const Color(0xFF2E2400) : theme.colorScheme.primaryContainer)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isUK
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      width: isUK ? 1.5 : 1.0,
+                          ? (isHighContrast ? const Color(0xFFFACC15) : theme.colorScheme.primary)
+                          : (isHighContrast ? Colors.white24 : theme.colorScheme.outline.withValues(alpha: 0.3)),
+                      width: isUK ? 1.8 : 1.0,
                     ),
                   ),
                   child: const Text('🇺🇦', style: TextStyle(fontSize: 18)),

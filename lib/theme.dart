@@ -151,3 +151,153 @@ ThemeData materialLightTheme = ThemeData(
   ),
   useMaterial3: true,
 );
+
+// ============================================================================
+// TRYB WYSOKIEGO KONTRASTU (WCAG 2.2 AA / AAA COMPLIANT HIGH CONTRAST THEME)
+// ============================================================================
+
+var kHighContrastColorScheme = const ColorScheme(
+  brightness: Brightness.dark,
+  primary: Color(0xFFFACC15), // Jaskrawy żółty dla osób słabowidzących (>16:1 kontrast)
+  onPrimary: Color(0xFF000000), // Prawdziwa czerń na żółtym (21:1)
+  primaryContainer: Color(0xFF2E2400),
+  onPrimaryContainer: Color(0xFFFDE047),
+  secondary: Color(0xFF38BDF8), // Elektryczny błękit / cyjan
+  onSecondary: Color(0xFF000000),
+  tertiary: Color(0xFF4ADE80), // Jaskrawy zielony (rampy / brak barier)
+  onTertiary: Color(0xFF000000),
+  error: Color(0xFFFF5252), // Jaskrawa czerwień dla przeszkód
+  onError: Color(0xFF000000),
+  inverseSurface: Color(0xFF22C55E),
+  surface: Color(0xFF121212), // Głęboka czerń dla kart
+  onSurface: Color(0xFFFFFFFF), // Czysta biel na czerni (21:1)
+  outline: Color(0xFFFACC15), // Wyraźne kontury 2-3px
+);
+
+ThemeData materialHighContrastTheme = ThemeData(
+  colorScheme: kHighContrastColorScheme,
+  brightness: Brightness.dark,
+  unselectedWidgetColor: const Color(0xFFFFFFFF),
+  scaffoldBackgroundColor: const Color(0xFF000000),
+  fontFamily: 'InclusiveSans',
+  textTheme: const TextTheme(
+    displayLarge: TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 32.0,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFFFFFFFF),
+      letterSpacing: 0.5,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 28.0,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFFFFFFFF),
+      letterSpacing: 0.5,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 22.0,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFFFACC15),
+      letterSpacing: 0.4,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: 'InclusiveSans',
+      fontSize: 21.0,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFFFFFFFF),
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: 'InclusiveSans',
+      fontSize: 17.0,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFFF8FAFC),
+    ),
+    bodySmall: TextStyle(
+      fontFamily: 'InclusiveSans',
+      fontSize: 15.0,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFFE2E8F0),
+    ),
+    labelMedium: TextStyle(
+      fontFamily: 'InclusiveSans',
+      fontSize: 13.0,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFFFACC15),
+    ),
+  ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Color(0xFF000000),
+    scrolledUnderElevation: 0,
+    systemOverlayStyle: SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+    titleTextStyle: TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontWeight: FontWeight.w800,
+      fontSize: 22.0,
+      color: Color(0xFFFACC15),
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFFACC15),
+      foregroundColor: const Color(0xFF000000),
+      disabledBackgroundColor: const Color(0xFF334155),
+      disabledForegroundColor: const Color(0xFF94A3B8),
+      shadowColor: Colors.transparent,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 14.0),
+      textStyle: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 17.0,
+        fontWeight: FontWeight.w800,
+      ),
+      side: const BorderSide(color: Color(0xFFFFFFFF), width: 2.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: ButtonStyle(
+      textStyle: const WidgetStatePropertyAll(
+        TextStyle(
+          fontFamily: 'InclusiveSans',
+          fontSize: 20.0,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      foregroundColor: const WidgetStatePropertyAll(Color(0xFFFACC15)),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+      ),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          side: const BorderSide(color: Color(0xFFFACC15), width: 1.5),
+        ),
+      ),
+    ),
+  ),
+  cardTheme: const CardThemeData(
+    color: Color(0xFF121212),
+    shadowColor: Colors.transparent,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16.0)),
+      side: BorderSide(color: Color(0xFFFACC15), width: 2.0),
+    ),
+  ),
+  dialogTheme: const DialogThemeData(
+    backgroundColor: Color(0xFF121212),
+    titleTextStyle: TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 22.0,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFFFACC15),
+    ),
+  ),
+  useMaterial3: true,
+);
+

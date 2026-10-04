@@ -41,17 +41,27 @@ class _KrakMapViewState extends State<KrakMapView> {
       }
     }
 
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(50.0635, 19.9405), // Centrum Krakowa
-        initialZoom: 15.2,
-        minZoom: 12.0,
-        maxZoom: 18.5,
-        onLongPress: (tapPosition, latLng) {
-          state.setCustomPin(latLng);
-        },
-      ),
+    final mapSemanticsLabel = isPL
+        ? 'Interaktywna mapa Krakowa. Przedstawia trasę bez barier, przystanki oraz dostępne obiekty i parkingi dla osób z niepełnosprawnościami. Pełna tekstowa alternatywa mapy (WCAG 2.2 AA) dostępna pod skrótem Alt+M lub na pasku narzędzi.'
+        : 'Interactive map of Kraków. Displays accessible route, transit, places and disabled parking. Full WCAG 2.2 AA text alternative available via Alt+M.';
+
+    return Semantics(
+      label: mapSemanticsLabel,
+      hint: isPL
+          ? 'Naciśnij Alt+M lub przycisk Tekstowa alternatywa aby otworzyć pełny opis tekstowy'
+          : 'Press Alt+M or Text alternative button for full textual representation',
+      child: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: const LatLng(50.0635, 19.9405), // Centrum Krakowa
+          initialZoom: 15.2,
+          minZoom: 12.0,
+          maxZoom: 18.5,
+          onLongPress: (tapPosition, latLng) {
+            state.setCustomPin(latLng);
+          },
+        ),
+
       children: [
         // Podkład mapy miejskiej (CartoDB Voyager z fallbackiem do OpenStreetMap)
         TileLayer(
@@ -661,6 +671,7 @@ class _KrakMapViewState extends State<KrakMapView> {
           ],
         ),
       ],
+    ),
     );
   }
 }

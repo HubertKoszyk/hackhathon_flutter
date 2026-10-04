@@ -165,6 +165,8 @@ Widget _buildProfileOption({
   required String subtitle,
   required VoidCallback onTap,
 }) {
+  final isDark = theme.brightness == Brightness.dark;
+
   return InkWell(
     onTap: onTap,
     borderRadius: BorderRadius.circular(16),
@@ -172,13 +174,17 @@ Widget _buildProfileOption({
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isSelected
-            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.45)
-            : kColorGrayScheme.primary,
+            ? (isDark
+                ? const Color(0xFF2E2400)
+                : theme.colorScheme.primaryContainer.withValues(alpha: 0.45))
+            : (isDark ? const Color(0xFF141414) : kColorGrayScheme.primary),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isSelected
               ? theme.colorScheme.primary
-              : theme.colorScheme.outline.withValues(alpha: 0.4),
+              : (isDark
+                  ? const Color(0xFF334155)
+                  : theme.colorScheme.outline.withValues(alpha: 0.4)),
           width: isSelected ? 2.0 : 1.0,
         ),
       ),
@@ -190,12 +196,14 @@ Widget _buildProfileOption({
             decoration: BoxDecoration(
               color: isSelected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.surface,
+                  : (isDark ? const Color(0xFF1E1E1E) : theme.colorScheme.surface),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    : (isDark
+                        ? const Color(0xFFFACC15).withValues(alpha: 0.4)
+                        : theme.colorScheme.outline.withValues(alpha: 0.4)),
               ),
             ),
             child: Icon(

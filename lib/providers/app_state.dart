@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_translations.dart';
 import '../models/accessibility_audit.dart';
@@ -27,6 +28,14 @@ class AppState extends ChangeNotifier {
   AccessiblePlace? _selectedAccessiblePlace;
   AccessibilityAudit? _activeAudit;
   LatLng? _customPin;
+
+  // Dostępność cyfrowa (WCAG 2.2 AA)
+  bool _isHighContrastMode = false;
+  double _textScale = 1.0;
+  bool _isMapTextAlternativeVisible = false;
+  String? _accessibilityAnnouncement;
+  Timer? _announcementTimer;
+
 
   // GPS i bieżąca lokalizacja
   bool _isLocatingUser = false;
@@ -96,6 +105,12 @@ class AppState extends ChangeNotifier {
   bool get isAnalyzingRoute => _isAnalyzingRoute;
   String get analysisStatusText => _analysisStatusText;
 
+  // Getters Dostępności WCAG 2.2 AA
+  bool get isHighContrastMode => _isHighContrastMode;
+  double get textScale => _textScale;
+  bool get isMapTextAlternativeVisible => _isMapTextAlternativeVisible;
+  String? get accessibilityAnnouncement => _accessibilityAnnouncement;
+
   // Getters Nawigacji na żywo
   bool get isNavigating => _isNavigating;
   List<NavigationStep> get navigationSteps => _navigationSteps;
@@ -146,6 +161,127 @@ class AppState extends ChangeNotifier {
   String tr(String key) => AppTranslations.tr(key, _language);
 
   // Actions
+  void toggleHighContrast() {
+    _isHighContrastMode = !_isHighContrastMode;
+    notifyListeners();
+    announceAccessibility(
+      _isHighContrastMode
+          ? (_language == 'pl'
+              ? 'Włączono tryb wysokiego kontrastu WCAG 2.2 AA'
+              : (_language == 'uk'
+                  ? 'Увімкнено режим високого контрасту WCAG 2.2 AA'
+                  : 'High contrast mode enabled (WCAG 2.2 AA)'))
+          : (_language == 'pl'
+              ? 'Wyłączono tryb wysokiego kontrastu'
+              : (_language == 'uk'
+                  ? 'Вимкнено режим високого контрасту'
+                  : 'High contrast mode disabled')),
+    );
+  }
+
+  void cycleTextScale() {
+    if (_textScale == 1.0) {
+      _textScale = 1.18;
+    } else if (_textScale == 1.18) {
+      _textScale = 1.35;
+    } else {
+      _textScale = 1.0;
+    }
+    notifyListeners();
+    announceAccessibility(
+      _language == 'pl'
+          ? 'Powiększenie tekstu: ${(_textScale * 100).toInt()}%'
+          : (_language == 'uk'
+              ? 'Масштаб тексту: ${(_textScale * 100).toInt()}%'
+              : 'Text size: ${(_textScale * 100).toInt()}%'),
+    );
+  }
+
+  void setTextScale(double scale) {
+    if (_textScale != scale) {
+      _textScale = scale;
+      notifyListeners();
+      announceAccessibility(
+        _language == 'pl'
+            ? 'Rozmiar tekstu: ${(_textScale * 100).toInt()}%'
+            : 'Text size: ${(_textScale * 100).toInt()}%',
+      );
+    }
+  }
+
+  void toggleMapTextAlternative() {
+    _isMapTextAlternativeVisible = !_isMapTextAlternativeVisible;
+    notifyListeners();
+    announceAccessibility(
+      _isMapTextAlternativeVisible
+          ? (_language == 'pl'
+              ? 'Włączono pełną tekstową alternatywę dla mapy (WCAG 2.2 AA)'
+              : (_language == 'uk'
+                  ? 'Увімкнено текстову альтернативу карти'
+                  : 'Map text alternative enabled (WCAG 2.2 AA)'))
+          : (_language == 'pl'
+              ? 'Powrót do mapy graficznej'
+              : (_language == 'uk'
+                  ? 'Повернення до графічної карти'
+                  : 'Returned to graphic map')),
+    );
+  }
+
+  void setMapTextAlternative(bool value) {
+    if (_isMapTextAlternativeVisible != value) {
+      _isMapTextAlternativeVisible = value;
+      notifyListeners();
+      announceAccessibility(
+        _isMapTextAlternativeVisible
+            ? (_language == 'pl'
+                ? 'Włączono tekstową alternatywę dla mapy'
+                : 'Map text alternative enabled')
+            : (_language == 'pl'
+                ? 'Powrót do mapy graficznej'
+                : 'Returned to graphic map'),
+      );
+    }
+  }
+
+  void loadPresetRoute(String presetId) {
+    _routes = RoutingService.getRoutesForPreset(presetId, _profile);
+    _selectedRouteIndex = _routes.isNotEmpty ? 0 : -1;
+    notifyListeners();
+  }
+
+  void announceAccessibility(String message) {
+    _accessibilityAnnouncement = message;
+    _announcementTimer?.cancel();
+    _announcementTimer = Timer(const Duration(seconds: 4), () {
+      _accessibilityAnnouncement = null;
+      notifyListeners();
+    });
+    notifyListeners();
+    // ignore: deprecated_member_use
+    SemanticsService.announce(message, TextDirection.ltr);
+  }
+
+  void readCurrentSummaryAloud() {
+    final isPl = _language == 'pl';
+    String summary = '';
+    if (_isNavigating && currentStep != null) {
+      summary = isPl
+          ? 'Nawigacja w toku. Krok: ${currentStep!.instructionPl}. Pozostało ${(remainingDistance / 1000).toStringAsFixed(1)} km, około ${(remainingDurationSeconds / 60).round()} minut.'
+          : 'Navigation active. Step: ${currentStep!.instructionEn}. Remaining ${(remainingDistance / 1000).toStringAsFixed(1)} km.';
+    } else if (currentRoute != null) {
+      final distKm = (currentRoute!.distanceMeters / 1000).toStringAsFixed(1);
+      summary = isPl
+          ? 'Wybrana trasa bez barier: od ${_startLocation.namePl} do ${_destinationLocation?.namePl ?? "celu"}. Dystans: $distKm km, czas: ${currentRoute!.durationMinutes} minut. 0 schodów, 100% zjazdów WCAG.'
+          : 'Accessible route selected: $distKm km, ${currentRoute!.durationMinutes} min, 0 stairs, 100% WCAG compliant.';
+    } else {
+      summary = isPl
+          ? 'NavAble Kraków - Dostępność cyfrowa WCAG 2.2 AA. Aktualna lokalizacja: ${_startLocation.namePl}. W pobliżu znajduje się ${_accessiblePlaces.length} dostępnych obiektów oraz ${_parkingSpots.length} kopert postojowych dla osób z niepełnosprawnościami. Użyj Alt+M aby otworzyć pełną tekstową alternatywę mapy.'
+          : 'NavAble Kraków WCAG 2.2 AA. Current location: ${_startLocation.nameEn}. ${_accessiblePlaces.length} accessible places and ${_parkingSpots.length} parking spots nearby. Press Alt+M for map text alternative.';
+    }
+    announceAccessibility(summary);
+  }
+
+
   void toggleLanguage() {
     if (_language == 'pl') {
       _language = 'en';
@@ -456,7 +592,17 @@ class AppState extends ChangeNotifier {
   // ==========================================
 
   void startNavigation() {
-    final route = currentRoute;
+    var route = currentRoute;
+    if (route == null && _routes.isNotEmpty) {
+      _selectedRouteIndex = 0;
+      route = _routes.first;
+    } else if (route == null && _routes.isEmpty) {
+      _routes = RoutingService.getRoutesForPreset('preset_dworzec_rynek', _profile);
+      if (_routes.isNotEmpty) {
+        _selectedRouteIndex = 0;
+        route = _routes.first;
+      }
+    }
     if (route == null || route.coordinates.isEmpty) return;
 
     _isNavigating = true;

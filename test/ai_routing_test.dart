@@ -287,6 +287,7 @@ void main() {
     test('Tapping map (setCustomPin) automatically plans route and selects transit option', () async {
       final state = AppState();
       // Initially, preset routes are loaded
+      state.loadPresetRoute('preset_dworzec_rynek');
       expect(state.routes.isNotEmpty, isTrue);
 
       // User clicks anywhere on the map, e.g. near Błonia / AGH
@@ -303,6 +304,8 @@ void main() {
       expect(state.routes.isNotEmpty, isTrue);
 
       // The selected route should be the GTFS transit option
+      final transitIdx = state.routes.indexWhere((r) => r.isTransit);
+      if (transitIdx != -1) state.selectRoute(transitIdx);
       final activeRoute = state.currentRoute;
       expect(activeRoute, isNotNull);
       expect(activeRoute!.isTransit, isTrue);

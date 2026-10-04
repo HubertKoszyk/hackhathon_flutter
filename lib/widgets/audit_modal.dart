@@ -21,6 +21,7 @@ class _AuditModalState extends State<AuditModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final state = context.watch<AppState>();
     final isPL = state.language == 'pl';
     final audit = widget.audit;
@@ -137,10 +138,14 @@ class _AuditModalState extends State<AuditModal> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: kColorGrayScheme.primary,
+                                      color: isDark
+                                          ? const Color(0xFF1E1E1E)
+                                          : kColorGrayScheme.primary,
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
-                                        color: kColorGrayScheme.secondary,
+                                        color: isDark
+                                            ? const Color(0xFFFACC15)
+                                            : kColorGrayScheme.secondary,
                                       ),
                                     ),
                                     child: Text(
@@ -191,9 +196,15 @@ class _AuditModalState extends State<AuditModal> {
                     child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        color: kColorGrayScheme.primary,
+                        color: isDark
+                            ? const Color(0xFF1E1E1E)
+                            : kColorGrayScheme.primary,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: kColorGrayScheme.secondary),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : kColorGrayScheme.secondary,
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -482,9 +493,15 @@ class _AuditModalState extends State<AuditModal> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: kColorGrayScheme.primary,
+                          color: isDark
+                              ? const Color(0xFF1E1E1E)
+                              : kColorGrayScheme.primary,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: kColorGrayScheme.secondary),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : kColorGrayScheme.secondary,
+                          ),
                         ),
                         child: Column(
                           children: [

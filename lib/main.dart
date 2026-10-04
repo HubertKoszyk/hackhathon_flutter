@@ -8,9 +8,11 @@ import 'providers/app_state.dart';
 import 'widgets/accessible_place_sheet.dart';
 import 'widgets/audit_modal.dart';
 import 'widgets/live_navigation_overlay.dart';
+import 'widgets/map_text_alternative_view.dart';
 import 'widgets/map_view.dart';
 import 'widgets/parking_details_sheet.dart';
 import 'widgets/route_result_sheet.dart';
+import 'widgets/wcag_keyboard_manager.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,10 +38,22 @@ class KrakAccessApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+
     return MaterialApp(
       title: 'NavAble',
       debugShowCheckedModeBanner: false,
-      theme: materialLightTheme,
+      theme: state.isHighContrastMode
+          ? materialHighContrastTheme
+          : materialLightTheme,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(state.textScale),
+          ),
+          child: WcagKeyboardManager(child: child!),
+        );
+      },
       home: const MainScreen(),
     );
   }
@@ -68,23 +82,26 @@ class _MainScreenState extends State<MainScreen> {
       child: Scaffold(
         body: Stack(
           children: [
-            // 1. Podkład mapy Krakowa z trasami i parkingami
-            const Positioned.fill(child: KrakMapView()),
+            // 1. Podkład mapy Krakowa z trasami i parkingami LUB Tekstowa alternatywa dla mapy (WCAG 2.2 AA)
+            if (state.isMapTextAlternativeVisible)
+              const Positioned.fill(child: MapTextAlternativeView())
+            else
+              const Positioned.fill(child: KrakMapView()),
 
             // 2. TRYB NAWIGACJI NA ŻYWO (Google Maps Turn-by-Turn Live HUD)
-            if (state.isNavigating)
+            if (state.isNavigating && !state.isMapTextAlternativeVisible)
               const Positioned.fill(child: LiveNavigationOverlay()),
 
-            // 3. TRYB PRZEGLĄDANIA I PLANOWANIA TRASY (Gdy nawigacja nie jest aktywna)
-            if (!state.isNavigating) ...[
+            // 3. TRYB PRZEGLĄDANIA I PLANOWANIA TRASY (Gdy nawigacja nie jest aktywna i nie jest w widoku tekstowym)
+            if (!state.isNavigating && !state.isMapTextAlternativeVisible) ...[
               // Górny pasek nawigacji i wyboru profilu
-              // const Positioned(top: 0, left: 0, right: 0, child: TopBar()),
               const Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: TopGradientBar(),
               ),
+
 
               // Pływający przycisk mojej lokalizacji GPS
               // Positioned(
