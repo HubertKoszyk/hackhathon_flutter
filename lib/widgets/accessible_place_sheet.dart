@@ -144,7 +144,10 @@ class AccessiblePlaceSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -165,7 +168,6 @@ class AccessiblePlaceSheet extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -231,6 +233,7 @@ class AccessiblePlaceSheet extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.close, color: Colors.white70, size: 22),
                   padding: EdgeInsets.zero,
@@ -455,8 +458,8 @@ class AccessiblePlaceSheet extends StatelessWidget {
                     icon: const Icon(Icons.directions_walk, size: 20),
                     label: Text(
                       isPL
-                          ? 'Wyznacz trasę bez barier tutaj'
-                          : 'Plan accessible route here',
+                          ? 'Trasa bez barier'
+                          : 'Accessible route',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13.5,
