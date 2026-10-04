@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_translations.dart';
 import '../models/accessibility_audit.dart';
 import '../models/accessible_place.dart';
@@ -23,15 +22,11 @@ class AppState extends ChangeNotifier {
   bool _showAccessiblePlacesLayer = true;
   String _placeCategoryFilter = 'all'; // 'all', 'hotel', 'building'
   final String _selectedPresetId = 'preset_dworzec_rynek';
-  int _selectedRouteIndex = 0; // 0 = Accessible, 1 = Standard
+  int _selectedRouteIndex = -1; // -1 = Nic nie wybrano początkowo
   ParkingSpot? _selectedParking;
   AccessiblePlace? _selectedAccessiblePlace;
   AccessibilityAudit? _activeAudit;
   LatLng? _customPin;
-
-  // Samouczek / Tutorial (Onboarding)
-  bool _hasSeenTutorial = false;
-  bool _shouldShowTutorial = false;
 
   // GPS i bieżąca lokalizacja
   bool _isLocatingUser = false;
@@ -80,42 +75,9 @@ class AppState extends ChangeNotifier {
     _accessiblePlaces = KrakowDataService.getAccessiblePlaces();
     _routes = [];
     useCurrentLocationAsStart(calculateRoute: false);
-    initTutorialStatus();
-  }
-
-  Future<void> initTutorialStatus() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      _hasSeenTutorial = prefs.getBool('navable_tutorial_seen') ?? false;
-      if (!_hasSeenTutorial) {
-        _shouldShowTutorial = true;
-        notifyListeners();
-      }
-    } catch (_) {}
-  }
-
-  Future<void> markTutorialAsSeen() async {
-    _hasSeenTutorial = true;
-    _shouldShowTutorial = false;
-    notifyListeners();
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('navable_tutorial_seen', true);
-    } catch (_) {}
-  }
-
-  void openTutorial() {
-    _shouldShowTutorial = true;
-    notifyListeners();
-  }
-
-  void dismissTutorialFlag() {
-    _shouldShowTutorial = false;
   }
 
   // Getters
-  bool get hasSeenTutorial => _hasSeenTutorial;
-  bool get shouldShowTutorial => _shouldShowTutorial;
   String get language => _language;
   MobilityProfile get profile => _profile;
   bool get showParkingLayer => _showParkingLayer;
@@ -177,7 +139,9 @@ class AppState extends ChangeNotifier {
   List<AccessiblePlace> get allAccessiblePlaces => _accessiblePlaces;
   List<RouteModel> get routes => _routes;
   RouteModel? get currentRoute =>
-      _routes.isNotEmpty ? _routes[_selectedRouteIndex] : null;
+      (_selectedRouteIndex >= 0 && _selectedRouteIndex < _routes.length)
+          ? _routes[_selectedRouteIndex]
+          : null;
 
   String tr(String key) => AppTranslations.tr(key, _language);
 
@@ -228,14 +192,18 @@ class AppState extends ChangeNotifier {
 
   void selectRoute(int index) {
     if (index >= 0 && index < _routes.length) {
-      _selectedRouteIndex = index;
+      if (_selectedRouteIndex == index) {
+        _selectedRouteIndex = -1; // Ponowne kliknięcie odznacza
+      } else {
+        _selectedRouteIndex = index;
+      }
       notifyListeners();
     }
   }
 
   void clearRoutes() {
     _routes = [];
-    _selectedRouteIndex = 0;
+    _selectedRouteIndex = -1;
     _isAnalyzingRoute = false;
     notifyListeners();
   }
@@ -415,14 +383,8 @@ class AppState extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    // Domyślnie zaznaczamy trasę komunikacji miejskiej GTFS (tramwaj/autobus),
-    // jeśli jest dostępna, aby użytkownik od razu widział opcję tramwajową!
-    final transitIdx = _routes.indexWhere((r) => r.isTransit);
-    if (transitIdx != -1) {
-      _selectedRouteIndex = transitIdx;
-    } else {
-      _selectedRouteIndex = 0;
-    }
+    // Początkowo nic nie jest wybrane - użytkownik sam decyduje, którą opcję wybrać
+    _selectedRouteIndex = -1;
     _isAnalyzingRoute = false;
     notifyListeners();
   }

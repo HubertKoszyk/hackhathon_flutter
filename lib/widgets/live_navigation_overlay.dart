@@ -48,7 +48,11 @@ class LiveNavigationOverlay extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isTransit ? const Color(0xFF0284C7) : const Color(0xFF064E3B)).withValues(alpha: 0.5),
+                          color:
+                              (isTransit
+                                      ? const Color(0xFF0284C7)
+                                      : const Color(0xFF064E3B))
+                                  .withValues(alpha: 0.5),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -75,7 +79,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                                     border: Border.all(color: Colors.white24),
                                   ),
                                   child: Icon(
-                                    currentStep?.maneuverIcon ?? (isTransit ? Icons.tram : Icons.navigation),
+                                    currentStep?.maneuverIcon ??
+                                        (isTransit
+                                            ? Icons.tram
+                                            : Icons.navigation),
                                     color: Colors.white,
                                     size: 32,
                                   ),
@@ -84,11 +91,17 @@ class LiveNavigationOverlay extends StatelessWidget {
                                   Positioned(
                                     bottom: -5,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 1.5,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF0F172A),
                                         borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(color: const Color(0xFF38BDF8), width: 1),
+                                        border: Border.all(
+                                          color: const Color(0xFF38BDF8),
+                                          width: 1,
+                                        ),
                                       ),
                                       child: Text(
                                         transitInfo.transitLeg.lineName,
@@ -110,11 +123,14 @@ class LiveNavigationOverlay extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
                                     textBaseline: TextBaseline.alphabetic,
                                     children: [
                                       Text(
-                                        _formatDistance(state.distanceToNextStep),
+                                        _formatDistance(
+                                          state.distanceToNextStep,
+                                        ),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 24,
@@ -136,8 +152,12 @@ class LiveNavigationOverlay extends StatelessWidget {
                                   const SizedBox(height: 2),
                                   Text(
                                     currentStep != null
-                                        ? (isPL ? currentStep.instructionPl : currentStep.instructionEn)
-                                        : (isPL ? 'Podążaj wyznaczoną trasą' : 'Follow the route'),
+                                        ? (isPL
+                                              ? currentStep.instructionPl
+                                              : currentStep.instructionEn)
+                                        : (isPL
+                                              ? 'Podążaj wyznaczoną trasą'
+                                              : 'Follow the route'),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 15,
@@ -157,7 +177,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                         if (currentStep?.accessibilityNotePl != null) ...[
                           const SizedBox(height: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.25),
                               borderRadius: BorderRadius.circular(10),
@@ -174,7 +197,9 @@ class LiveNavigationOverlay extends StatelessWidget {
                                   child: Text(
                                     isPL
                                         ? currentStep!.accessibilityNotePl!
-                                        : (currentStep!.accessibilityNoteEn ?? currentStep.accessibilityNotePl ?? ''),
+                                        : (currentStep!.accessibilityNoteEn ??
+                                              currentStep.accessibilityNotePl ??
+                                              ''),
                                     style: const TextStyle(
                                       color: Color(0xFFD1FAE5),
                                       fontSize: 11,
@@ -194,16 +219,29 @@ class LiveNavigationOverlay extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.subdirectory_arrow_right, color: Colors.white60, size: 14),
+                              const Icon(
+                                Icons.subdirectory_arrow_right,
+                                color: Colors.white60,
+                                size: 14,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 isPL ? 'Następnie: ' : 'Then: ',
-                                style: const TextStyle(color: Colors.white60, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Expanded(
                                 child: Text(
-                                  isPL ? nextStep.instructionPl : nextStep.instructionEn,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 10.5),
+                                  isPL
+                                      ? nextStep.instructionPl
+                                      : nextStep.instructionEn,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10.5,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -219,7 +257,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                   if (state.approachingHazardAlert != null)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF991B1B).withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(14),
@@ -233,7 +274,11 @@ class LiveNavigationOverlay extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -277,11 +322,15 @@ class LiveNavigationOverlay extends StatelessWidget {
               FloatingActionButton.small(
                 heroTag: 'nav_voice_btn',
                 backgroundColor: const Color(0xFF1E293B),
-                foregroundColor: state.isVoiceMuted ? Colors.white54 : const Color(0xFF10B981),
+                foregroundColor: state.isVoiceMuted
+                    ? Colors.white54
+                    : const Color(0xFF10B981),
                 elevation: 4,
                 tooltip: isPL ? 'Wskazówki głosowe' : 'Voice cues',
                 onPressed: state.toggleVoiceMute,
-                child: Icon(state.isVoiceMuted ? Icons.volume_off : Icons.volume_up),
+                child: Icon(
+                  state.isVoiceMuted ? Icons.volume_off : Icons.volume_up,
+                ),
               ),
               const SizedBox(height: 10),
 
@@ -303,11 +352,15 @@ class LiveNavigationOverlay extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: Icon(
-                        state.isSimulatingNavigation ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                        state.isSimulatingNavigation
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
                         color: const Color(0xFF38BDF8),
                         size: 26,
                       ),
-                      tooltip: state.isSimulatingNavigation ? 'Wstrzymaj symulację' : 'Wznów symulację',
+                      tooltip: state.isSimulatingNavigation
+                          ? 'Wstrzymaj symulację'
+                          : 'Wznów symulację',
                       onPressed: state.toggleSimulationPlayPause,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -317,11 +370,16 @@ class LiveNavigationOverlay extends StatelessWidget {
                       onTap: () {
                         // Cykliczna zmiana prędkości: 1x -> 2x -> 4x -> 1x
                         final current = state.simulationSpeedMultiplier;
-                        final next = current == 1.0 ? 2.0 : (current == 2.0 ? 4.0 : 1.0);
+                        final next = current == 1.0
+                            ? 2.0
+                            : (current == 2.0 ? 4.0 : 1.0);
                         state.setSimulationSpeed(next);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF38BDF8).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
@@ -356,7 +414,9 @@ class LiveNavigationOverlay extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A).withValues(alpha: 0.98),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.6),
@@ -365,7 +425,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -375,7 +438,9 @@ class LiveNavigationOverlay extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: _calculateProgress(state),
                         backgroundColor: Colors.white12,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFF10B981),
+                        ),
                         minHeight: 4,
                       ),
                     ),
@@ -392,7 +457,9 @@ class LiveNavigationOverlay extends StatelessWidget {
                               textBaseline: TextBaseline.alphabetic,
                               children: [
                                 Text(
-                                  _formatDurationMinutes(state.remainingDurationSeconds),
+                                  _formatDurationMinutes(
+                                    state.remainingDurationSeconds,
+                                  ),
                                   style: const TextStyle(
                                     color: Color(0xFF10B981),
                                     fontSize: 26,
@@ -420,7 +487,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                const Text(' • ', style: TextStyle(color: Colors.white38)),
+                                const Text(
+                                  ' • ',
+                                  style: TextStyle(color: Colors.white38),
+                                ),
                                 Text(
                                   'ETA ${_calculateEta(state.remainingDurationSeconds)}',
                                   style: const TextStyle(
@@ -437,11 +507,20 @@ class LiveNavigationOverlay extends StatelessWidget {
 
                         // Wskaźnik prędkości marszu / trybu podróży (Pieszo vs GTFS)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isTransit ? const Color(0xFF38BDF8).withValues(alpha: 0.4) : Colors.white12),
+                            border: Border.all(
+                              color: isTransit
+                                  ? const Color(
+                                      0xFF38BDF8,
+                                    ).withValues(alpha: 0.4)
+                                  : Colors.white12,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -451,13 +530,17 @@ class LiveNavigationOverlay extends StatelessWidget {
                                     ? '${transitInfo.transitLeg.vehicleType == TransitVehicleType.tram ? "Tram" : "Bus"} ${transitInfo.transitLeg.lineName}'
                                     : '${state.currentWalkingSpeedKmh.toStringAsFixed(1)} km/h',
                                 style: TextStyle(
-                                  color: isTransit ? const Color(0xFF38BDF8) : Colors.white,
+                                  color: isTransit
+                                      ? const Color(0xFF38BDF8)
+                                      : Colors.white,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                isTransit ? 'GTFS Live' : (isPL ? 'Prędkość' : 'Speed'),
+                                isTransit
+                                    ? 'GTFS Live'
+                                    : (isPL ? 'Prędkość' : 'Speed'),
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 9.5,
@@ -470,11 +553,17 @@ class LiveNavigationOverlay extends StatelessWidget {
 
                         // Przycisk Zakończ (Czerwony okrągły X)
                         ElevatedButton.icon(
-                          onPressed: state.stopNavigation,
+                          onPressed: () {
+                            state.stopNavigation();
+                            state.clearRoutes();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFEF4444),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -510,7 +599,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF0F172A),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFF10B981), width: 2),
+                    border: Border.all(
+                      color: const Color(0xFF10B981),
+                      width: 2,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF10B981).withValues(alpha: 0.4),
@@ -528,7 +620,11 @@ class LiveNavigationOverlay extends StatelessWidget {
                           color: Color(0xFF10B981),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.flag_rounded, color: Colors.white, size: 40),
+                        child: const Icon(
+                          Icons.flag_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -542,9 +638,12 @@ class LiveNavigationOverlay extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         isPL
-                            ? 'Trasa bez barier KrakAccess pokonana pomyślnie.'
-                            : 'KrakAccess barrier-free route completed.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                            ? 'Trasa bez barier NavAble pokonana pomyślnie.'
+                            : 'NavAble barrier-free route completed.',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 18),
@@ -559,9 +658,21 @@ class LiveNavigationOverlay extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatItem('0', isPL ? 'Schodów' : 'Stairs', const Color(0xFF34D399)),
-                            _buildStatItem('100%', isPL ? 'Rampy 0cm' : '0cm curbs', const Color(0xFF38BDF8)),
-                            _buildStatItem('${state.currentRoute?.stairsAvoided ?? 0}', isPL ? 'Ominiętych' : 'Avoided', const Color(0xFFFBBF24)),
+                            _buildStatItem(
+                              '0',
+                              isPL ? 'Schodów' : 'Stairs',
+                              const Color(0xFF34D399),
+                            ),
+                            _buildStatItem(
+                              '100%',
+                              isPL ? 'Rampy 0cm' : '0cm curbs',
+                              const Color(0xFF38BDF8),
+                            ),
+                            _buildStatItem(
+                              '${state.currentRoute?.stairsAvoided ?? 0}',
+                              isPL ? 'Ominiętych' : 'Avoided',
+                              const Color(0xFFFBBF24),
+                            ),
                           ],
                         ),
                       ),
@@ -570,7 +681,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: state.stopNavigation,
+                          onPressed: () {
+                            state.stopNavigation();
+                            state.clearRoutes();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF10B981),
                             foregroundColor: Colors.white,
@@ -581,7 +695,10 @@ class LiveNavigationOverlay extends StatelessWidget {
                           ),
                           child: Text(
                             isPL ? 'Wróć do mapy Krakowa' : 'Back to map',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
@@ -600,12 +717,13 @@ class LiveNavigationOverlay extends StatelessWidget {
       children: [
         Text(
           val,
-          style: TextStyle(color: col, fontSize: 18, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            color: col,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-        Text(
-          lbl,
-          style: const TextStyle(color: Colors.white60, fontSize: 10),
-        ),
+        Text(lbl, style: const TextStyle(color: Colors.white60, fontSize: 10)),
       ],
     );
   }

@@ -114,8 +114,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       } else if (_syncedDestinationId != state.destinationLocation!.id ||
           langChanged) {
         _syncedDestinationId = state.destinationLocation!.id;
-        _destinationController.text =
-            state.destinationLocation!.localizedName(state.language);
+        _destinationController.text = state.destinationLocation!.localizedName(
+          state.language,
+        );
       }
     }
     if (state.isAnalyzingRoute) {
@@ -124,7 +125,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
   }
 
   List<KrakowLocation> _getSuggestions({required bool isDestination}) {
-    final query = isDestination ? _destinationController.text : _startController.text;
+    final query = isDestination
+        ? _destinationController.text
+        : _startController.text;
     return KrakowLocationsDatabase.search(query);
   }
 
@@ -182,7 +185,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     // Synchronizuj punkt docelowy jeśli użytkownik ręcznie wpisał inną nazwę
     if (state.destinationLocation == null ||
         (destText != state.destinationLocation!.localizedName(state.language) &&
-         destText != state.destinationLocation!.namePl)) {
+            destText != state.destinationLocation!.namePl)) {
       final destMatches = KrakowLocationsDatabase.search(destText);
       if (destMatches.isNotEmpty) {
         state.setDestinationLocation(destMatches.first, calculateRoute: false);
@@ -203,6 +206,84 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
     // Faktyczne wyszukiwanie i analiza trasy z wyświetleniem ładowania i wyniku
     state.planRouteBetweenSelectedPoints(showLoader: true);
+  }
+
+  void _onSwapLocations(AppState state) {
+    FocusScope.of(context).unfocus();
+
+    final currentStartText = _startController.text.trim();
+    final currentDestText = _destinationController.text.trim();
+
+    // 1. Jeśli pole docelowe ma wpisany tekst, ale w stanie jest null, pobierz/utwórz lokalizację
+    KrakowLocation? destLoc = state.destinationLocation;
+    if (destLoc == null && currentDestText.isNotEmpty) {
+      final destMatches = KrakowLocationsDatabase.search(currentDestText);
+      destLoc = destMatches.isNotEmpty
+          ? destMatches.first
+          : KrakowLocation(
+              id: 'loc_custom_dest_${DateTime.now().millisecondsSinceEpoch}',
+              namePl: currentDestText,
+              nameEn: currentDestText,
+              address: 'Kraków, $currentDestText',
+              point: const LatLng(50.0617, 19.9373),
+              category: 'custom',
+            );
+    }
+
+    // 2. Jeśli pole startowe ma wpisany tekst różniący się od stanu, pobierz/utwórz lokalizację
+    KrakowLocation startLoc = state.startLocation;
+    if (currentStartText.isNotEmpty &&
+        currentStartText != state.startLocation.localizedName(state.language) &&
+        currentStartText != state.startLocation.namePl) {
+      final startMatches = KrakowLocationsDatabase.search(currentStartText);
+      startLoc = startMatches.isNotEmpty
+          ? startMatches.first
+          : KrakowLocation(
+              id: 'loc_custom_start_${DateTime.now().millisecondsSinceEpoch}',
+              namePl: currentStartText,
+              nameEn: currentStartText,
+              address: 'Kraków, $currentStartText',
+              point: const LatLng(50.0647, 19.9450),
+              category: 'custom',
+            );
+    }
+
+    // 3. Zamiana miejscami
+    if (destLoc != null && currentStartText.isNotEmpty) {
+      // Obie lokalizacje istnieją
+      state.setStartLocation(destLoc, calculateRoute: false);
+      state.setDestinationLocation(startLoc, calculateRoute: false);
+      _syncedStartId = destLoc.id;
+      _syncedDestinationId = startLoc.id;
+      _startController.text = destLoc.localizedName(state.language);
+      _destinationController.text = startLoc.localizedName(state.language);
+    } else if (destLoc != null && currentStartText.isEmpty) {
+      // Tylko punkt docelowy był wpisany -> staje się punktem startowym
+      state.setStartLocation(destLoc, calculateRoute: false);
+      state.setDestinationLocation(null, calculateRoute: false);
+      _syncedStartId = destLoc.id;
+      _syncedDestinationId = null;
+      _startController.text = destLoc.localizedName(state.language);
+      _destinationController.clear();
+    } else if (currentStartText.isNotEmpty && destLoc == null) {
+      // Tylko punkt startowy był wpisany -> staje się punktem docelowym, a start jest czyszczony
+      final emptyStart = KrakowLocation(
+        id: 'loc_empty_${DateTime.now().millisecondsSinceEpoch}',
+        namePl: '',
+        nameEn: '',
+        address: '',
+        point: const LatLng(50.0645, 19.9430),
+        category: 'custom',
+      );
+      state.setStartLocation(emptyStart, calculateRoute: false);
+      state.setDestinationLocation(startLoc, calculateRoute: false);
+      _syncedStartId = emptyStart.id;
+      _syncedDestinationId = startLoc.id;
+      _startController.clear();
+      _destinationController.text = startLoc.localizedName(state.language);
+    }
+
+    setState(() {});
   }
 
   @override
@@ -269,8 +350,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                             isPL
                                 ? 'Wyszukiwanie i analiza trasy...'
                                 : (isUK
-                                    ? 'Пошук та аналіз маршруту...'
-                                    : 'Searching & analyzing route...'),
+                                      ? 'Пошук та аналіз маршруту...'
+                                      : 'Searching & analyzing route...'),
                             style: theme.textTheme.displaySmall?.copyWith(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -282,12 +363,14 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                             state.analysisStatusText.isNotEmpty
                                 ? state.analysisStatusText
                                 : (isPL
-                                    ? 'Analizowanie dostępności AI, barier i nawierzchni...'
-                                    : (isUK
-                                        ? 'Аналіз доступності AI, бар\'єрів та покриття...'
-                                        : 'Analyzing AI accessibility, barriers and surfaces...')),
+                                      ? 'Analizowanie dostępności AI, barier i nawierzchni...'
+                                      : (isUK
+                                            ? 'Аналіз доступності AI, бар\'єрів та покриття...'
+                                            : 'Analyzing AI accessibility, barriers and surfaces...')),
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                               fontSize: 13.5,
                             ),
                             textAlign: TextAlign.center,
@@ -306,8 +389,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
     final isInputFocused =
         _startFocusNode.hasFocus || _destinationFocusNode.hasFocus;
-    final currentCardHeight =
-        isInputFocused ? (_baseCardHeight + _suggestionsBoxHeight) : _baseCardHeight;
+    final currentCardHeight = isInputFocused
+        ? (_baseCardHeight + _suggestionsBoxHeight)
+        : _baseCardHeight;
     final currentTotalHeight = currentCardHeight + _bottomSpacing;
 
     return DraggableScrollableSheet(
@@ -331,8 +415,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.08,
+                      ),
                       blurRadius: 16.0,
                       offset: const Offset(0, -4),
                     ),
@@ -367,12 +452,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   // 3. SEKCJA WYNIKU TRASY (Gdy wyszukiwanie zostało wykonane)
                   if (_hasTriggeredSearch && state.currentRoute != null)
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        20.0,
-                        4.0,
-                        20.0,
-                        16.0,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(20.0, 4.0, 20.0, 16.0),
                       sliver: SliverToBoxAdapter(
                         child: _buildResultSection(context, theme, state),
                       ),
@@ -380,32 +460,34 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
 
                   // 4. SEKCJA MIEJSC BEZ BARIER (HOTELE, KULTURA, KOPERTY)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      20.0,
-                      4.0,
-                      20.0,
-                      16.0,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20.0, 4.0, 20.0, 16.0),
                     sliver: SliverToBoxAdapter(
-                      child: _buildAccessiblePlacesSection(context, theme, state),
+                      child: _buildAccessiblePlacesSection(
+                        context,
+                        theme,
+                        state,
+                      ),
                     ),
                   ),
 
                   // 5. LISTA OSTATNIO WYSZUKIWANYCH POD SPODEM
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      20.0,
-                      4.0,
-                      20.0,
-                      12.0,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20.0, 4.0, 20.0, 12.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        Text(
-                          isPL
-                              ? 'Ostatnio wyszukiwane'
-                              : (isUK ? 'Нещодавній пошук' : 'Recent searches'),
-                          style: theme.textTheme.displaySmall,
+                        Row(
+                          children: [
+                            Icon(Icons.history, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              isPL
+                                  ? 'Ostatnio wyszukiwane'
+                                  : (isUK
+                                        ? 'Нещодавній пошук'
+                                        : 'Recent searches'),
+                              style: theme.textTheme.displaySmall,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         _buildHistoryItem(
@@ -463,7 +545,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
   ) {
     final isStartFilled = _startController.text.trim().isNotEmpty;
     final isDestinationFilled = _destinationController.text.trim().isNotEmpty;
-    final canSearch = isStartFilled &&
+    final canSearch =
+        isStartFilled &&
         isDestinationFilled &&
         !state.isLocatingUser &&
         !state.isAnalyzingRoute;
@@ -474,10 +557,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(
-          color: theme.colorScheme.outline,
-          width: 1.5,
-        ),
+        border: Border.all(color: theme.colorScheme.outline, width: 1.5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -507,7 +587,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
               IconButton(
                 icon: Icon(
                   Icons.tune,
-                  size: 24,
+                  size: 20.0,
                   color: theme.colorScheme.onSurface,
                 ),
                 tooltip: isPL
@@ -531,9 +611,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
             icon: Icons.navigation_outlined,
             hint: isPL
                 ? 'Punkt startowy (Skąd)'
-                : (isUK
-                    ? 'Звідки (Початкова точка)'
-                    : 'Start location (From)'),
+                : (isUK ? 'Звідки (Початкова точка)' : 'Start location (From)'),
             suffix: GestureDetector(
               onTap: () async {
                 await state.useCurrentLocationAsStart(calculateRoute: false);
@@ -585,27 +663,41 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
             hint: isPL
                 ? 'Wpisz miejsce docelowe'
                 : (isUK ? 'Куди (Пункт призначення)' : 'Enter destination'),
-            suffix: _destinationController.text.isNotEmpty &&
-                    _destinationFocusNode.hasFocus
-                ? GestureDetector(
+            suffix: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_destinationController.text.isNotEmpty &&
+                    _destinationFocusNode.hasFocus)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () {
                       _destinationController.clear();
                       state.setDestinationLocation(null, calculateRoute: false);
                       setState(() {});
                     },
-                    child: Icon(
-                      Icons.close,
-                      size: 18,
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.6),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6.0),
+                      child: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
                     ),
-                  )
-                : Icon(
-                    Icons.search,
-                    size: 18,
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.6),
                   ),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _onSwapLocations(state),
+                  child: Tooltip(
+                    message: isPL
+                        ? 'Zamień kierunki miejscami'
+                        : (isUK ? 'Поміняти місцями' : 'Swap directions'),
+                    child: Icon(Icons.swap_vert_rounded, size: 22),
+                  ),
+                ),
+              ],
+            ),
             onSubmitted: (query) {
               if (canSearch) {
                 _onSearchButtonPressed(state);
@@ -633,13 +725,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
             height: 44,
             child: ElevatedButton.icon(
               onPressed: canSearch ? () => _onSearchButtonPressed(state) : null,
-              icon: const Icon(
-                Icons.search,
-                size: 20,
-              ),
-              label: Text(
-                isPL ? 'Szukaj' : (isUK ? 'Знайти' : 'Search'),
-              ),
+              icon: const Icon(Icons.search, size: 18),
+              label: Text(isPL ? 'Szukaj' : (isUK ? 'Знайти' : 'Search')),
             ),
           ),
         ],
@@ -668,11 +755,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: theme.colorScheme.onSurface,
-          ),
+          Icon(icon, size: 18, color: theme.colorScheme.onSurface),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -693,6 +776,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
               onSubmitted: onSubmitted,
             ),
           ),
+          const SizedBox(width: 8.0),
           ?suffix,
         ],
       ),
@@ -734,8 +818,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   state.language == 'pl'
                       ? 'Brak pasujących miejsc w Krakowie'
                       : (state.language == 'uk'
-                          ? 'Немає відповідних місць у Кракові'
-                          : 'No matching places in Krakow'),
+                            ? 'Немає відповідних місць у Кракові'
+                            : 'No matching places in Krakow'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -810,8 +894,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                           Icon(
                             Icons.north_west,
                             size: 14,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.35),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.35,
+                            ),
                           ),
                         ],
                       ),
@@ -866,36 +951,17 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.accessible_forward,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.accessible_forward, size: 24),
                 const SizedBox(width: 8),
                 Text(
                   isPL
                       ? 'Miejsca z trybem bez barier'
                       : (isUK
-                          ? 'Заклади з безбар’єрним режимом'
-                          : 'Accessible places & venues'),
-                  style: theme.textTheme.displaySmall?.copyWith(fontSize: 16),
+                            ? 'Заклади з безбар’єрним режимом'
+                            : 'Accessible places & venues'),
+                  style: theme.textTheme.displaySmall,
                 ),
               ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${state.allAccessiblePlaces.length + parkings.length} ${isPL ? 'punktów' : 'places'}',
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ),
           ],
         ),
@@ -915,21 +981,24 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
               const SizedBox(width: 6),
               _buildCategoryChip(
                 theme: theme,
-                label: '🏨 ${isPL ? 'Hotele bez barier' : 'Hotels'} (${hotels.length})',
+                label:
+                    '🏨 ${isPL ? 'Hotele bez barier' : 'Hotels'} (${hotels.length})',
                 isSelected: _placeTabFilter == 'hotel',
                 onTap: () => setState(() => _placeTabFilter = 'hotel'),
               ),
               const SizedBox(width: 6),
               _buildCategoryChip(
                 theme: theme,
-                label: '🏛️ ${isPL ? 'Budynki i kultura' : 'Venues'} (${buildings.length})',
+                label:
+                    '🏛️ ${isPL ? 'Budynki i kultura' : 'Venues'} (${buildings.length})',
                 isSelected: _placeTabFilter == 'building',
                 onTap: () => setState(() => _placeTabFilter = 'building'),
               ),
               const SizedBox(width: 6),
               _buildCategoryChip(
                 theme: theme,
-                label: '🅿️ ${isPL ? 'Koperty ON' : 'Parking'} (${parkings.length})',
+                label:
+                    '🅿️ ${isPL ? 'Koperty ON' : 'Parking'} (${parkings.length})',
                 isSelected: _placeTabFilter == 'parking',
                 onTap: () => setState(() => _placeTabFilter = 'parking'),
               ),
@@ -1038,7 +1107,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     bool isPL,
   ) {
     final isHotel = place.category == AccessiblePlaceCategory.hotel;
-    final badgeColor = isHotel ? const Color(0xFFF59E0B) : const Color(0xFF8B5CF6);
+    final badgeColor = isHotel
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFF8B5CF6);
 
     return InkWell(
       onTap: () {
@@ -1071,7 +1142,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2.5,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -1098,7 +1172,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(5),
@@ -1144,19 +1221,34 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 Row(
                   children: [
                     if (place.hasWheelchairAccess)
-                      const Icon(Icons.accessible, size: 14, color: Color(0xFF0284C7)),
+                      const Icon(
+                        Icons.accessible,
+                        size: 14,
+                        color: Color(0xFF0284C7),
+                      ),
                     if (place.hasHearingLoop) ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.hearing, size: 14, color: Color(0xFFA78BFA)),
+                      const Icon(
+                        Icons.hearing,
+                        size: 14,
+                        color: Color(0xFFA78BFA),
+                      ),
                     ],
                     if (place.hasAdaptedRooms) ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.king_bed, size: 14, color: Color(0xFFF59E0B)),
+                      const Icon(
+                        Icons.king_bed,
+                        size: 14,
+                        color: Color(0xFFF59E0B),
+                      ),
                     ],
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3.5,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
@@ -1229,7 +1321,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2.5,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -1252,16 +1347,26 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: (spot.isOccupied ? const Color(0xFFEF4444) : const Color(0xFF10B981))
-                        .withValues(alpha: 0.15),
+                    color:
+                        (spot.isOccupied
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF10B981))
+                            .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
-                    spot.isOccupied ? (isPL ? 'Zajęte' : 'Occupied') : (isPL ? 'Wolne' : 'Free'),
+                    spot.isOccupied
+                        ? (isPL ? 'Zajęte' : 'Occupied')
+                        : (isPL ? 'Wolne' : 'Free'),
                     style: TextStyle(
-                      color: spot.isOccupied ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      color: spot.isOccupied
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF10B981),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1300,7 +1405,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   child: Text(
                     spot.note,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
                       fontSize: 10,
                     ),
                     maxLines: 1,
@@ -1308,7 +1415,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3.5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0284C7).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -1325,7 +1435,11 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                         ),
                       ),
                       SizedBox(width: 3),
-                      Icon(Icons.navigation, size: 10, color: Color(0xFF0284C7)),
+                      Icon(
+                        Icons.navigation,
+                        size: 10,
+                        color: Color(0xFF0284C7),
+                      ),
                     ],
                   ),
                 ),
@@ -1337,8 +1451,6 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     );
   }
 
-
-
   // Wyświetlanie tekstu wyniku wyszukiwania trasy
   Widget _buildResultSection(
     BuildContext context,
@@ -1349,8 +1461,9 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
     if (route == null) return const SizedBox.shrink();
 
     final isPL = state.language == 'pl';
-    final startName =
-        isPL ? state.startLocation.namePl : state.startLocation.nameEn;
+    final startName = isPL
+        ? state.startLocation.namePl
+        : state.startLocation.nameEn;
     final destName = isPL
         ? (state.destinationLocation?.namePl ?? '')
         : (state.destinationLocation?.nameEn ?? '');
@@ -1360,10 +1473,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: theme.colorScheme.outline,
-          width: 1.2,
-        ),
+        border: Border.all(color: theme.colorScheme.outline, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1469,12 +1579,8 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
         padding: const EdgeInsets.symmetric(vertical: 11.0),
         child: Row(
           children: [
-            Icon(
-              Icons.history,
-              size: 22,
-              color: theme.colorScheme.onSurface,
-            ),
-            const SizedBox(width: 14),
+            Icon(Icons.search, size: 20, color: theme.colorScheme.onSurface),
+            const SizedBox(width: 8),
             Expanded(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1489,7 +1595,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Icon(
                       Icons.arrow_forward,
                       size: 16,
@@ -1564,7 +1670,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 onTap: () => state.setLanguage('pl'),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isPL
                         ? theme.colorScheme.primaryContainer
@@ -1577,10 +1686,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                       width: isPL ? 1.5 : 1.0,
                     ),
                   ),
-                  child: const Text(
-                    '🇵🇱',
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: const Text('🇵🇱', style: TextStyle(fontSize: 18)),
                 ),
               ),
               const SizedBox(width: 6),
@@ -1588,7 +1694,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 onTap: () => state.setLanguage('en'),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isEN
                         ? theme.colorScheme.primaryContainer
@@ -1601,10 +1710,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                       width: isEN ? 1.5 : 1.0,
                     ),
                   ),
-                  child: const Text(
-                    '🇬🇧',
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: const Text('🇬🇧', style: TextStyle(fontSize: 18)),
                 ),
               ),
               const SizedBox(width: 6),
@@ -1612,7 +1718,10 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                 onTap: () => state.setLanguage('uk'),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isUK
                         ? theme.colorScheme.primaryContainer
@@ -1625,10 +1734,7 @@ class _CustomStickySheetState extends State<CustomStickySheet> {
                       width: isUK ? 1.5 : 1.0,
                     ),
                   ),
-                  child: const Text(
-                    '🇺🇦',
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: const Text('🇺🇦', style: TextStyle(fontSize: 18)),
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 var kColorScheme = const ColorScheme(
   brightness: Brightness.light,
@@ -88,6 +89,11 @@ ThemeData materialLightTheme = ThemeData(
   appBarTheme: const AppBarTheme(
     backgroundColor: Color.fromARGB(255, 255, 255, 255),
     scrolledUnderElevation: 0,
+    systemOverlayStyle: SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
     titleTextStyle: TextStyle(
       fontFamily: 'PlusJakartaSans',
       fontWeight: FontWeight.w700,

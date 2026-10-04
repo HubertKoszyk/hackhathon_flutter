@@ -76,34 +76,22 @@ void showAccessibilityFiltersModal(BuildContext context) {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Górny uchwyt
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: kColorGrayScheme.tertiary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Nagłówek filtrów
                   Row(
                     children: [
-                      Icon(
-                        Icons.tune,
-                        size: 24,
-                        color: theme.colorScheme.primary,
-                      ),
+                      Icon(Icons.tune, size: 20.0),
                       const SizedBox(width: 10),
-                      Text(
-                        modalTitle,
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                      Text(modalTitle, style: theme.textTheme.displaySmall),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          size: 24.0,
+                          color: theme.colorScheme.onSurface,
                         ),
+                        onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
